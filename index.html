@@ -133,32 +133,32 @@
   
     <script>
       let pushnotif = () => {
-  //       clevertap.notifications.push({
-  //   titleText: "Would you like to receive Notification?",
-  //   bodyText: "Will send you only trusted notifactions and updates",
-  //   okButtonText: "OK",
-  //   rejectButtonText: "Cancel",
-  //   okButtonColor: "#F28046",
-  // });
-  navigator.geolocation.getCurrentPosition(function(position) {
-    let lat = position.coords.latitude;
-    let long = position.coords.longitude;
-    console.log(lat,long);
-    clevertap.event.push(lat);
-    clevertap.event.push("LOCATION", {
-  "LAT":lat,
-  "LONG":long,
-  "Date": new Date()
-});
-  clevertap.profile.push({
-    "Site": {
-      "Latitude": lat,
-      "Longitude": long,
-    },
-  
-});
-
+        clevertap.notifications.push({
+    titleText: "Would you like to receive Notification?",
+    bodyText: "Will send you only trusted notifactions and updates",
+    okButtonText: "OK",
+    rejectButtonText: "Cancel",
+    okButtonColor: "#F28046",
   });
+//   navigator.geolocation.getCurrentPosition(function(position) {
+//     let lat = position.coords.latitude;
+//     let long = position.coords.longitude;
+//     console.log(lat,long);
+//     clevertap.event.push(lat);
+//     clevertap.event.push("LOCATION", {
+//   "LAT":lat,
+//   "LONG":long,
+//   "Date": new Date()
+// });
+//   clevertap.profile.push({
+//     "Site": {
+//       "Latitude": lat,
+//       "Longitude": long,
+//     },
+  
+// });
+
+  //});
       };
     </script>
     
