@@ -72,6 +72,8 @@
     <button id="iptrue" onclick="iptrue()">IP TRUE</button><br><br>
     <button id="login" onclick="profilepush()">ProfilePush</button>
     <button id="loc" onclick="pushnotif()">Send Notification</button>
+    <button id="ctid" onclick="showctid()">Send Notification</button>
+    <h2 id="test"> </h2>
     <script>
       
       setTimeout(function() {
@@ -93,18 +95,18 @@
         clevertap.event.push("ProductViewed");
       };
 
-      // let ipfalse = () => {
+      let ipfalse = () => {
         
-      //   clevertap.privacy.push({ useIP: false }); 
-      //   clevertap.event.push("useIP: false ");
+        clevertap.privacy.push({ useIP: false }); 
+        clevertap.event.push("useIP: false ");
    
         
-      // };
-      // let iptrue = () => {
-      //   clevertap.privacy.push({ useIP: true }); 
-      //   clevertap.event.push("useIP: true ");
+      };
+      let iptrue = () => {
+        clevertap.privacy.push({ useIP: true }); 
+        clevertap.event.push("useIP: true ");
 
-      // };
+      };
 
       let onuserlogin = () => {
         clevertap.onUserLogin.push({
@@ -120,6 +122,11 @@
       "MSG-whatsapp": true,
     },
   });
+      };
+
+      let showctid = () => {
+        var ctid = clevertap.getCleverTapID();
+				document.getElementById("test").innerHTML = ctid;
       };
     </script>
     <!-- key/value events -->
