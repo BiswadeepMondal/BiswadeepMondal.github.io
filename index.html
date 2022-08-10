@@ -18,8 +18,9 @@
       };
       // replace with the CLEVERTAP_ACCOUNT_ID with the actual ACCOUNT ID value from your Dashboard -> Settings page
       clevertap.account.push({ id: "TEST-4W5-9RR-646Z" });
-      //clevertap.privacy.push({ useIP: false }); 
-        
+     // clevertap.account.push({ id: "TEST-468-W87-546Z" });
+     // clevertap.privacy.push({ useIP: true }); 
+      
       clevertap.privacy.push({ optOut: false }); //set the flag to true, if the user of the device opts out of sharing their data
       
       (function () {
@@ -73,23 +74,42 @@
     <button id="login" onclick="profilepush()">ProfilePush</button><br><br>
     <button id="loc" onclick="pushnotif()">Send Notification</button><br><br>
     <button id="ctid" onclick="showctid()">Show CT ID </button><br><br>
-    <button id="ctid" onclick="clear()">Clear CT ID </button><br><br>
+     <button id="pop" onclick="popup()">request ip </button><br><br>
+    <!-- <button id="ctid" onclick="clear()">Clear CT ID </button><br><br> -->
     <h2 id="test"> </h2>
     <script>
-      
-      setTimeout(function() {
-        let confirmAction = confirm("Are you sure to share your location?");
+      setTimeout(function(){
+    let confirmAction = confirm("Allow us to track IP ?");
         if (confirmAction) {
-
-           clevertap.event.push("useIP pop: true "); 
-           clevertap.privacy.push({ useIP: true }); 
+          //clevertap.event.push("useIP pop: true "); 
+          clevertap.privacy.push({ useIP: true }); 
+          clevertap.event.push("useIP pop: true "); 
           console.log("useIP: true ");
+         location.reload();
         } else {
-            clevertap.event.push("useIP: pop false "); 
+             //  clevertap.privacy.push({ useIP: false }); 
+          //clevertap.event.push("useIP: false ");
           console.log("useIP: false ");
+          // location.reload();
         }
-    //clevertap.event.push("HOME PAGE");
-    }, 3000);
+}, 2000);
+    //   let popup = () => {
+    //      let confirmAction = confirm("Allow us to track IP ?");
+    //     if (confirmAction) {
+    //       //clevertap.event.push("useIP pop: true "); 
+    //       clevertap.privacy.push({ useIP: true }); 
+    //       clevertap.event.push("useIP pop: true "); 
+    //       console.log("useIP: true ");
+    //      location.reload();
+    //     } else {
+    //          //  clevertap.privacy.push({ useIP: false }); 
+    //       clevertap.event.push("useIP: false ");
+    //       console.log("useIP: false ");
+    //       // location.reload();
+    //     }
+         
+    //   };
+     
 
      
       let pushEvent = () => {
@@ -130,10 +150,10 @@
 				document.getElementById("test").innerHTML = ctid;
       };
 
-      let clear = () => {
-        clevertap.clear();
-      };
-    </script>
+    //   let clear = () => {
+    //     clevertap.clear();
+    //   };
+    // </script>
     <!-- key/value events -->
     <!-- profile push  -->
    
