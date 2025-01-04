@@ -101,7 +101,7 @@
 
 // });
 
-     clevertap.event.push("Page Views");
+     
       let pushEvent = () => {
         clevertap.event.push("page load");
       };
@@ -117,19 +117,21 @@
       };
 
       let onuserlogin = () => {
-        clevertap.onUserLogin.push({
-          "Site": {
-            "Name": "div web",
-            "Identity": 73737373,
-            "Email": "73737373@gmail.com",
-            "Gender": "M",
-            "DOB": new Date(),
-            "MSG-email": true,
-            "MSG-push": true,
-            "MSG-sms": true,
-            "MSG-whatsapp": true,
-          },
-        });
+        // clevertap.onUserLogin.push({
+        //   "Site": {
+        //     "Name": "div web",
+        //     "Identity": 73737373,
+        //     "Email": "73737373@gmail.com",
+        //     "Gender": "M",
+        //     "DOB": new Date(),
+        //     "MSG-email": true,
+        //     "MSG-push": true,
+        //     "MSG-sms": true,
+        //     "MSG-whatsapp": true,
+        //   },
+        // });
+
+clevertap.event.push("Page Views");
       };
 
       let showctid = () => {
