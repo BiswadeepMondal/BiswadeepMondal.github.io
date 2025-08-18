@@ -52,8 +52,7 @@
     <!-- Carousel -->
     <div class="container">
       <h2>Carousel Example</h2>
-   
-<div id="slides" class="carousel slide" data-ride="carousel" data-interval="3000">
+      <div id="slides" class="carousel slide" data-ride="carousel">
         <div class="carousel-inner">
           <div class="item active">
             <img src="https://www.ricoh-imaging.co.jp/japan/products/kf/ex/img/ex-pic01-thumb.jpg" style="width:100%;">
@@ -65,7 +64,6 @@
             <img src="https://www.ricoh-imaging.co.jp/japan/products/kf/ex/img/ex-pic01-thumb.jpg" style="width:100%;">
           </div>
         </div>
-     
       </div>
     </div>
 
@@ -133,5 +131,15 @@
     </script>
 
     <link rel="manifest" href="/manifest.json" />
+
+    <!-- Force carousel auto-slide -->
+    <script>
+      $(document).ready(function(){
+        $('#slides').carousel({
+          interval: 3000,
+          pause: false
+        });
+      });
+    </script>
   </body>
 </html>
