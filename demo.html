@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clevertap 11234</title>
+    
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f7f7f7;
+      }
+
+      h1 {
+        text-align: center;
+        margin: 20px 0;
+      }
+
+      /* Carousel */
+      .carousel {
+        position: relative;
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      .slides {
+        display: flex;
+        transition: transform 0.5s ease-in-out;
+        width: 300%;
+      }
+
+      .slides img {
+        width: 100%;
+        border-radius: 8px;
+      }
+
+      .carousel-buttons {
+        position: absolute;
+        top: 50%;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        transform: translateY(-50%);
+      }
+
+      .carousel-buttons button {
+        background: rgba(0,0,0,0.5);
+        border: none;
+        color: white;
+        padding: 8px;
+        cursor: pointer;
+        border-radius: 50%;
+      }
+
+      /* Icon grid */
+      .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .icon-grid div {
+        background: #fff;
+        border-radius: 10px;
+        padding: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+
+      .icon-grid div:hover {
+        transform: scale(1.05);
+      }
+
+      .icon-grid img {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Carousel -->
+    <div class="carousel">
+      <div class="slides" id="slides">
+        <img src="https://www.ricoh-imaging.co.jp/japan/products/kf/ex/img/ex-pic01-thumb.jpg" />
+        <img src="https://www.ricoh-imaging.co.jp/japan/products/kf/ex/img/ex-pic01-thumb.jpg" />
+        <img src="https://www.ricoh-imaging.co.jp/japan/products/kf/ex/img/ex-pic01-thumb.jpg" />
+      </div>
+      <div class="carousel-buttons">
+        <button onclick="prevSlide()">&#10094;</button>
+        <button onclick="nextSlide()">&#10095;</button>
+      </div>
+    </div>
+
+    <!-- Icon Grid -->
+    <div class="icon-grid">
+      <div><img src="https://img.icons8.com/fluency/48/home.png"/><br>Home</div>
+      <div><img src="https://img.icons8.com/fluency/48/shopping-cart.png"/><br>Shop</div>
+      <div><img src="https://img.icons8.com/fluency/48/appointment-reminders.png"/><br>Alerts</div>
+      <div><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTwgrVHebxt2vTKExjCGz0feDWP3tG8lLsdBg&s"/><br>Profile</div>
+      <div><img src="https://img.icons8.com/fluency/48/settings.png"/><br>Settings</div>
+      <div><img src="https://img.icons8.com/fluency/48/about.png"/><br>Info</div>
+      <div><img src="https://img.icons8.com/fluency/48/help.png"/><br>Help</div>
+      <div><img src="https://img.icons8.com/fluency/48/logout-rounded.png"/><br>Logout</div>
+    </div>
+
+ <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.9.1/firebase-analytics.js";
+      // TODO: Add SDKs for Firebase products that you want to use
+      // https://firebase.google.com/docs/web/setup#available-libraries
+    
+      // Your web app's Firebase configuration
+      // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+      const firebaseConfig = {
+        apiKey: "AIzaSyA_Ogl_uvT3_b9isNPxr1QtwVYJ-CL0E3s",
+        authDomain: "ctest2-4f342.firebaseapp.com",
+        projectId: "ctest2-4f342",
+        storageBucket: "ctest2-4f342",
+        messagingSenderId: "68868130286",
+        appId: "1:68868130286:web:13f41cf53427ffbb84faff",
+        measurementId: "G-FGG4RYW3JL"
+      };
+    
+      // Initialize Firebase
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+    </script>
+
+    <link rel="manifest" href="/manifest.json" />
+    
+    <script>
+
+ clevertap.notifications.push({
+          titleText: "Would you like to receive Notification?",
+          bodyText: "Will send you only trusted notifications and updates",
+          okButtonText: "OK",
+          rejectButtonText: "Cancel",
+          okButtonColor: "#F28046",
+        });
+
+      // Simple Carousel Script
+      let index = 0;
+      const slides = document.getElementById("slides");
+      const total = slides.children.length;
+
+      function showSlide(i) {
+        index = (i + total) % total;
+        slides.style.transform = `translateX(${-index * 100}%)`;
+      }
+
+      function nextSlide() {
+        showSlide(index + 1);
+      }
+
+      function prevSlide() {
+        showSlide(index - 1);
+      }
+
+      // Auto slide every 3s
+      setInterval(nextSlide, 3000);
+    </script>
+  </body>
+</html>
