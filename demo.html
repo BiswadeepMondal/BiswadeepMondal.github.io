@@ -19,41 +19,45 @@
         margin: 20px 0;
       }
 
-      /* Carousel */
-      .carousel {
-        position: relative;
-        max-width: 100%;
-        overflow: hidden;
-      }
+      <style>
+  /* Carousel */
+  .carousel {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
 
-      .slides {
-        display: flex;
-        transition: transform 0.5s ease-in-out;
-        width: 300%;
-      }
+  .slides {
+    display: flex;
+    transition: transform 0.5s ease-in-out;
+    width: 100%;
+  }
 
-      .slides img {
-        width: 100%;
-        border-radius: 8px;
-      }
+  .slides img {
+    min-width: 100%;   /* each image takes full screen width */
+    height: auto;
+    border-radius: 0;  /* removed rounded corners for edge-to-edge look */
+  }
 
-      .carousel-buttons {
-        position: absolute;
-        top: 50%;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        transform: translateY(-50%);
-      }
+  .carousel-buttons {
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    transform: translateY(-50%);
+  }
 
-      .carousel-buttons button {
-        background: rgba(0,0,0,0.5);
-        border: none;
-        color: white;
-        padding: 8px;
-        cursor: pointer;
-        border-radius: 50%;
-      }
+  .carousel-buttons button {
+    background: rgba(0,0,0,0.5);
+    border: none;
+    color: white;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 50%;
+  }
+</style>
+
 
       /* Icon grid */
       .icon-grid {
