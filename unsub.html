@@ -96,18 +96,18 @@ function displayGroups() {
    function wzrk_email_subscription(status) {
        //status 0 : unsubscribed, status 1 : subscribed
        // todo - you can show a success message to the user from here
-        console.log("Status: "+ status);
-       console.log("statusLabel: "+ statusLabel);
+        console.log("In wzrk_email_subscription Status: "+ status); 
+       console.log("In wzrk_email_subscription statusLabel: "+ statusLabel); 
      
-       var statusLabel = 'subscribed';
-       if (status == 0) {
+       var statusLabel = 'subscribed'; 
+       if (status == 0) { 
            statusLabel = 'unsubscribed';
-                console.log("Status: "+ status);
-       console.log("statusLabel: "+ statusLabel);
+                console.log("IN if Status: "+ status); 
+       console.log(" IN if statusLabel: "+ statusLabel); 
        }
        alert("You've been " + statusLabel);
-       console.log("Status: "+ status);
-       console.log("statusLabel: "+ statusLabel);
+       console.log("out Status: "+ status);
+       console.log("out statusLabel: "+ statusLabel);
    }
 </script>
  </body>
