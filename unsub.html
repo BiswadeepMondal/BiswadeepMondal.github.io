@@ -2,67 +2,81 @@
 <html>
 <head>
 <title> </title>
-  <!-- CleverTap SDK -->
- <script type="text/javascript">
-   var clevertap = {event:[], profile:[], region : 'eu1', account:[], onUserLogin:[], notifications:[], privacy:[]};
-   clevertap.account.push({"id": "TEST-4W5-9RR-646Z"});
-   (function () {
-     var wzrk = document.createElement('script');
-     wzrk.type = 'text/javascript';
-     wzrk.async = true;
-     wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';
-     var s = document.getElementsByTagName('script')[0];
-     s.parentNode.insertBefore(wzrk, s);
-   })();
- </script>
+
+<!-- CleverTap SDK -->
+<script type="text/javascript">
+    var clevertap = {event:[], profile:[], region : 'eu1', account:[], onUserLogin:[], notifications:[], privacy:[]};
+    clevertap.account.push({"id": "TEST-4W5-9RR-646Z"});
+    (function () {
+        var wzrk = document.createElement('script');
+        wzrk.type = 'text/javascript';
+        wzrk.async = true;
+        wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(wzrk, s);
+    })();
+</script>
+
 </head>
 <body>
+
 <div>    
-   <h4>I want to unsubscribe from future emails
-   </h4>        
-   <input type="text" id="email" /> 
-   <br/><br/>
-   <!-- Displaying unsubscribe groups in the below div once loaded -->
-   <div id="unsubscribe-groups" style="display: none"></div>
-   <!-- Unsubscribe groups buttont. User will click here and it should call `changeSubscriptionGroups`
-       method to send the request to CleverTap. -->
-   <button onclick="changeSubscriptionGroups()">Update Subscription Groups</button>    
+    <h4>I want to unsubscribe from future emails</h4>
+
+    <input type="text" id="email" />
+    <br/><br/>
+
+    <!-- Subscription Groups -->
+    <div id="unsubscribe-groups" style="display: none"></div>
+
+    <button onclick="changeSubscriptionGroups()">Update Subscription Groups</button>
 </div>  
+
 <script> 
-  window.onload = function() {
-       var isReEncode = false //Should be true only if your server is url encoding the URL on unsubscribe landing page     
-       var withGroups = true  // Should be true if the unsubscribe groups should be displayed on the landing page.
-       $WZRK_WR.getEmail(false, withGroups);
-   };
-   // will be called after the email id of the user has been fetched
-   function wzrk_email_fetched(emailStr, profile) {
-       document.getElementById("email").value = emailStr;
-       if(!profile || !profile.groups || profile.groups.length === 0) {
-           console.log("did not recv groups in callback");
-       }
-       var subscriptionGroups = profile.groups; // will be recvd only if withGroups passed true above
-       $WZRK_WR.setSubscriptionGroups(subscriptionGroups); // Can also be set here and can be retrieved by calling `$WZRK_WR.getSubscriptionGroups` method
-        $WZRK_WR.setUpdatedCategoryLong(profile);
-       displayGroups()
-   }
+
+// ⭐ GLOBAL: Used by callback
+let lastUpdatedGroups = [];
+
+window.onload = function() {
+    var withGroups = true;
+    $WZRK_WR.getEmail(false, withGroups);
+};
+
+// Called when CleverTap returns email + groups
+function wzrk_email_fetched(emailStr, profile) {
+    document.getElementById("email").value = emailStr;
+
+    if (!profile || !profile.groups || profile.groups.length === 0) {
+        console.log("did not recv groups in callback");
+    }
+
+    var subscriptionGroups = profile.groups;
+
+    $WZRK_WR.setSubscriptionGroups(subscriptionGroups);
+    $WZRK_WR.setUpdatedCategoryLong(profile);
+
+    displayGroups();
+}
+
 function displayGroups() {
     var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
     var addList = document.getElementById('unsubscribe-groups');
     addList.style.display = 'block';
 
     for (var i = 0; i < subscriptionGroups.length; i++) {
+
         var obj = subscriptionGroups[i];
         var checkBox = document.createElement("INPUT");
-        var isUnsubscribed = obj.isUnsubscribed;
 
         checkBox.type = "checkbox";
         checkBox.name = obj.name;
         checkBox.id = obj.name;
         checkBox.className = "ct-unsub-group-input-item";
 
-        if (isUnsubscribed) {
+        // If group already unsubscribed → lock it
+        if (obj.isUnsubscribed) {
             checkBox.checked = true;
-            checkBox.disabled = true;              
+            checkBox.disabled = true;
             checkBox.style.opacity = "0.6";
             checkBox.style.cursor = "not-allowed";
         }
@@ -77,32 +91,35 @@ function displayGroups() {
     }
 }
 
-// This function is used to send groups updation request. User can directly call
-// `$WZRK_WR.changeSubscriptionGroups(isReencode, updatedGroups)` by passing updated groups in format specified.
 
-
+// Called when clicking "Update Subscription Groups"
 function changeSubscriptionGroups() {
-     // GLOBAL variable to store updated groups
-    let lastUpdatedGroups = [];
+
     let unsubcribeGroups = [];
     var elements = document.getElementsByClassName("ct-unsub-group-input-item");
 
     for (var i = 0; i < elements.length; i++) {
         var element = elements[i];
         if (element.name) {
-            var data = { name: element.name, isUnsubscribed: element.checked };
-            unsubcribeGroups.push(data);
+            unsubcribeGroups.push({
+                name: element.name,
+                isUnsubscribed: element.checked
+            });
         }
     }
 
-    // Store groups for use in callback
+    // Store globally for callback usage
     lastUpdatedGroups = unsubcribeGroups;
 
+    // Send to CleverTap
     $WZRK_WR.changeSubscriptionGroups(false, unsubcribeGroups);
 }
-   // will be called after the subscription preferences for the user have been updated
- function wzrk_email_subscription(status) {
-    // Find all groups where user selected unsubscribe
+
+
+// CleverTap callback after update
+function wzrk_email_subscription(status) {
+
+    // Filter unsubscribed groups
     const unsubscribedList = lastUpdatedGroups
         .filter(g => g.isUnsubscribed)
         .map(g => g.name);
@@ -121,5 +138,6 @@ function changeSubscriptionGroups() {
 }
 
 </script>
- </body>
+
+</body>
 </html>
