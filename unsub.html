@@ -94,20 +94,9 @@ function displayGroups() {
     } 
    // will be called after the subscription preferences for the user have been updated
    function wzrk_email_subscription(status) {
-       //status 0 : unsubscribed, status 1 : subscribed
-       // todo - you can show a success message to the user from here
-        console.log("In wzrk_email_subscription Status: "+ status); 
-       console.log("In wzrk_email_subscription statusLabel: "+ statusLabel); 
      
-       var statusLabel = 'subscribed'; 
-       if (status == 0) { 
-           statusLabel = 'unsubscribed';
-                console.log("IN if Status: "+ status); 
-       console.log(" IN if statusLabel: "+ statusLabel); 
-       }
-       alert("You've been " + statusLabel);
-       console.log("out Status: "+ status);
-       console.log("out statusLabel: "+ statusLabel);
+       alert("You've been unsubscribed ");
+     
    }
 </script>
  </body>
