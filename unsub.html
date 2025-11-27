@@ -1,0 +1,290 @@
+<html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Unsubscribe from emails</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 24px; color:#111; background:#f7f8fb; }
+    .card { background: #fff; max-width:700px; margin: 24px auto; padding: 20px; border-radius: 10px; box-shadow: 0 6px 18px rgba(20,20,40,0.06);}
+    h1 { margin:0 0 8px; font-size:20px; }
+    p.lead { margin:0 0 18px; color: #444; }
+    label { display:block; margin-bottom:6px; font-weight:600; }
+    input[type="text"] { width:100%; padding:10px 12px; border:1px solid #d6d9df; border-radius:6px; box-sizing:border-box; }
+    #unsubscribe-groups { margin-top:16px; padding:10px; border-radius:6px; background:#fbfcfe; border:1px dashed #e3e7ef; }
+    .group-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
+    .muted { color:#666; font-size:13px; }
+    button { cursor:pointer; padding:10px 14px; border-radius:8px; border:none; background:#0b74ff; color:#fff; font-weight:600; }
+    button.secondary { background:#e7eaf3; color:#1b2b45; }
+    .note { font-size:13px; color:#555; margin-top:10px; }
+    .hidden { display:none; }
+    .center { text-align:center; }
+  </style>
+
+  <!-- CleverTap - paste inside head: replace CLEVERTAP_ACCOUNT_ID with your actual account ID -->
+  <script type="text/javascript">
+    var clevertap = {event:[], profile:[], account:[], onUserLogin:[], notifications:[]};
+    // replace "CLEVERTAP_ACCOUNT_ID" with your actual ACCOUNT ID (Dashboard -> Settings)
+    clevertap.account.push({"id": "TEST-4W5-9RR-646Z"});
+    (function () {
+      var wzrk = document.createElement('script');
+      wzrk.type = 'text/javascript';
+      wzrk.async = true;
+      wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';
+      var s = document.getElementsByTagName('script')[0];
+      s.parentNode.insertBefore(wzrk, s);
+    })();
+  </script>
+</head>
+<body>
+  <main class="card" role="main" aria-labelledby="title">
+    <h1 id="title">Unsubscribe from future emails</h1>
+    <p class="lead">Enter your email below and choose which email groups you would like to stop receiving.</p>
+
+    <div id="form-area">
+      <label for="email">Email address</label>
+      <input type="text" id="email" name="email" autocomplete="email" placeholder="you@example.com" aria-describedby="email-help" />
+      <div id="email-help" class="muted">We'll fetch your current subscription groups for this email (if available).</div>
+
+      <div id="unsubscribe-groups" class="hidden" aria-live="polite" aria-label="Subscription groups">
+        <!-- Groups will be rendered here -->
+      </div>
+
+      <div style="margin-top:16px;">
+        <button id="update-btn" onclick="changeSubscriptionGroups()">Update subscription groups</button>
+        <button id="fallback-btn" class="secondary" onclick="submitFallback()">Unsubscribe (fallback)</button>
+      </div>
+
+      <div id="status" class="note"></div>
+    </div>
+  </main>
+
+  <script>
+    // Configuration flags (adjust as necessary)
+    var isReEncode = false; // true only if your server URL-encodes the unsubscribe landing URL
+    var withGroups = true;  // true to fetch + display subscription groups
+
+    // Utility: safe access to the CleverTap web wrapper ($WZRK_WR).
+    function getWzrkWrapper() {
+      // CleverTap's web wrapper object might exist as $WZRK_WR after clevertap.min.js loads.
+      return window.$WZRK_WR || null;
+    }
+
+    // On page load: try to fetch email & groups using the CleverTap web helper.
+    window.onload = function() {
+      var wzrk = getWzrkWrapper();
+      var statusEl = document.getElementById('status');
+      statusEl.textContent = 'Loading subscription data...';
+
+      // If wrapper not available yet, attempt a delayed call — but still defensive.
+      if (!wzrk) {
+        // Wait up to 2s for script to load, then proceed with fallback.
+        setTimeout(function() {
+          var wzrk2 = getWzrkWrapper();
+          if (wzrk2) {
+            try { wzrk2.getEmail(isReEncode, withGroups); } catch (e) { console.warn(e); showStatus('Unable to fetch subscription data.'); }
+          } else {
+            showStatus('CleverTap script not loaded. Please ensure the clevertap SDK is reachable.');
+          }
+        }, 1000);
+        return;
+      }
+      try {
+        // Request email and groups — the SDK is expected to call back to wzrk_email_fetched.
+        wzrk.getEmail(isReEncode, withGroups);
+      } catch (ex) {
+        console.error('Error calling getEmail:', ex);
+        showStatus('Unable to fetch subscription data.');
+      }
+    };
+
+    // Called by CleverTap SDK (or test harness) once email & profile are available.
+    // signature: wzrk_email_fetched(emailStr, profile)
+    function wzrk_email_fetched(emailStr, profile) {
+      try {
+        document.getElementById("email").value = emailStr || '';
+      } catch (e) { /* ignore */ }
+
+      var statusEl = document.getElementById('status');
+      if (!profile || !profile.groups || profile.groups.length === 0) {
+        // No groups returned — show informative message
+        showStatus('No subscription groups available for this email.');
+        // still set empty groups so changeSubscriptionGroups can operate
+        window._ct_subscription_groups = [];
+        renderGroups([]);
+        return;
+      }
+
+      // Save groups to a simple in-page store and render
+      window._ct_subscription_groups = profile.groups || [];
+      // Allow CleverTap helper to also hold groups (as in provided snippet)
+      var wzrk = getWzrkWrapper();
+      if (wzrk && typeof wzrk.setSubscriptionGroups === 'function') {
+        try { wzrk.setSubscriptionGroups(window._ct_subscription_groups); } catch (e) { console.warn(e); }
+      }
+
+      // Some implementations use setUpdatedCategoryLong — keep for compatibility
+      if (wzrk && typeof wzrk.setUpdatedCategoryLong === 'function') {
+        try { wzrk.setUpdatedCategoryLong(profile); } catch (e) { console.warn(e); }
+      }
+
+      showStatus('Subscription groups loaded.');
+      renderGroups(window._ct_subscription_groups);
+    }
+
+    // Render groups into #unsubscribe-groups
+    function renderGroups(subscriptionGroups) {
+      var container = document.getElementById('unsubscribe-groups');
+      container.innerHTML = ''; // clear
+      if (!subscriptionGroups || subscriptionGroups.length === 0) {
+        container.classList.add('hidden');
+        return;
+      }
+      container.classList.remove('hidden');
+
+      subscriptionGroups.forEach(function(obj, idx) {
+        var row = document.createElement('div');
+        row.className = 'group-row';
+
+        var check = document.createElement('input');
+        check.type = 'checkbox';
+        check.className = 'ct-unsub-group-input-item';
+        check.id = 'ct-unsub-' + idx;
+        check.name = obj.name || ('group-' + idx);
+        check.checked = !!obj.isUnsubscribed; // if already unsubscribed, keep checked
+
+        var label = document.createElement('label');
+        label.setAttribute('for', check.id);
+        label.textContent = 'Unsubscribe from ' + (obj.name || ('Group ' + (idx+1)));
+
+        row.appendChild(check);
+        row.appendChild(label);
+        container.appendChild(row);
+      });
+    }
+
+    // Send updated groups to CleverTap. Mirrors provided snippet logic.
+    function changeSubscriptionGroups() {
+      var emailEl = document.getElementById('email');
+      var email = (emailEl && emailEl.value || '').trim();
+      if (!email) {
+        alert('Please enter your email address.');
+        return;
+      }
+
+      var unsubcribeGroups = [];
+      var elements = document.getElementsByClassName("ct-unsub-group-input-item");
+      for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        if (element.name) {
+          var data = { name: element.name, isUnsubscribed: element.checked };
+          unsubcribeGroups.push(data);
+        }
+      }
+
+      var wzrk = getWzrkWrapper();
+      if (wzrk && typeof wzrk.changeSubscriptionGroups === 'function') {
+        try {
+          // pass the email as well if wrapper supports it — otherwise wrapper will operate on current user
+          wzrk.changeSubscriptionGroups(isReEncode, unsubcribeGroups, email);
+          showStatus('Updating subscription preferences...');
+        } catch (err) {
+          console.error('Error calling changeSubscriptionGroups:', err);
+          showStatus('Failed to update subscription preferences.');
+        }
+      } else {
+        // Fallback: if SDK isn't present, call a custom endpoint on your server (example).
+        // Replace /api/clevertap-unsubscribe with your real server endpoint if you have one.
+        showStatus('CleverTap SDK not available; sending fallback request to server...');
+        fallbackServerUpdate(email, unsubcribeGroups);
+      }
+    }
+
+    // Called by CleverTap SDK after subscription preferences are updated
+    // function signature expected: wzrk_email_subscription(status) where status 0 = unsubscribed, 1 = subscribed
+    function wzrk_email_subscription(status) {
+      var statusLabel = (status == 0) ? 'unsubscribed' : 'subscribed';
+      alert("You've been " + statusLabel + ".");
+      showStatus("You've been " + statusLabel + ".");
+    }
+
+    // Basic fallback: POST groups to server endpoint (example). Adapt to your backend.
+    function fallbackServerUpdate(email, groups) {
+      // NOTE: You must implement the server endpoint to call CleverTap APIs securely.
+      // Do not push your CleverTap account ID / API keys to client-side code.
+      var statusEl = document.getElementById('status');
+      statusEl.textContent = 'Sending request to server...';
+      try {
+        fetch('/api/clevertap-unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, groups: groups })
+        })
+        .then(function(res) {
+          if (res.ok) {
+            statusEl.textContent = 'Your preferences were updated (server).';
+            alert('Your subscription preferences were updated.');
+          } else {
+            return res.text().then(function(txt){ throw new Error(txt || 'Server error'); });
+          }
+        })
+        .catch(function(err){
+          console.error('Fallback update failed:', err);
+          statusEl.textContent = 'Failed to update preferences: ' + (err.message || 'unknown error');
+          alert('Failed to update preferences. Please contact support.');
+        });
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'Failed to send request.';
+      }
+    }
+
+    // A simple UI helper to update status text
+    function showStatus(txt) {
+      var s = document.getElementById('status');
+      if (s) s.textContent = txt || '';
+    }
+
+    // Optional: fallback single-click unsubscribe in case groups aren't present
+    function submitFallback() {
+      var email = (document.getElementById('email').value || '').trim();
+      if (!email) { alert('Please enter your email address.'); return; }
+      // The fallback action: mark whole email unsubscribed. Implement server side endpoint.
+      if (!confirm('Do you want to unsubscribe this email from all future emails?')) return;
+      // Example call (server implementation required)
+      fetch('/api/clevertap-unsubscribe-all', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ email: email })
+      })
+      .then(function(resp){
+        if (resp.ok) {
+          alert('You have been unsubscribed from all emails.');
+          showStatus('Unsubscribed from all emails.');
+        } else {
+          return resp.text().then(function(txt){ throw new Error(txt || 'Server error'); });
+        }
+      })
+      .catch(function(err){
+        console.error(err);
+        alert('Unsubscribe failed. Please contact support.');
+        showStatus('Unsubscribe failed.');
+      });
+    }
+
+    // For local testing without the CleverTap SDK:
+    // Uncomment the snippet below to simulate the SDK callback and sample groups.
+    /*
+    setTimeout(function(){
+      wzrk_email_fetched('tester@example.com', {
+        groups: [
+          { name: 'Promotions', isUnsubscribed: false },
+          { name: 'Newsletters', isUnsubscribed: true },
+          { name: 'Offers', isUnsubscribed: false }
+        ]
+      });
+    }, 500);
+    */
+  </script>
+</body>
+</html>
