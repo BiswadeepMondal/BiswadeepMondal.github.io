@@ -10,8 +10,7 @@
     h1 { margin-top: 0; }
     #unsubscribe-groups { margin-top: 12px; }
     .group-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
-    button { padding:8px 14px; border-radius:6px; border:1px solid #bbb; background:#f7f7f7; cursor:pointer; }
-    button.primary { background:#0b73ff; color:white; border-color:#0b63e6; }
+    button { padding:8px 14px; border-radius:6px; border:1px solid #bbb; background:#0b73ff; color:white; cursor:pointer; }
     input#email { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
   </style>
 </head>
@@ -24,10 +23,8 @@
       <input type="text" id="email" readonly="readonly" placeholder="Loading email..." />
       <div id="unsubscribe-groups" style="display:none"></div>
 
-      <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
-        <button onclick="changeSubscriptionGroups()" class="primary">Update Subscription Groups</button>
-        <button onclick="refreshGroups()">Refresh Groups</button>
-        <button onclick="showCurrentGroups()">Show Current Groups</button>
+      <div style="margin-top:16px;">
+        <button onclick="changeSubscriptionGroups()">Update Subscription Groups</button>
       </div>
     </div>
   </div>
@@ -60,7 +57,6 @@
       document.getElementById('email').value = emailStr || '';
 
       if (!profile || !profile.groups || !Array.isArray(profile.groups)) {
-        console.log("No groups received");
         return;
       }
 
@@ -119,15 +115,6 @@
     function wzrk_email_subscription(status) {
       alert(status == 0 ? "You've been unsubscribed" : "You've been subscribed");
       $WZRK_WR.getEmail(isReEncode, withGroups);
-    }
-
-    function refreshGroups() {
-      $WZRK_WR.getEmail(isReEncode, withGroups);
-    }
-
-    function showCurrentGroups() {
-      console.log("Current groups:", $WZRK_WR.getSubscriptionGroups());
-      alert("Groups printed in console.");
     }
   </script>
 </body>
