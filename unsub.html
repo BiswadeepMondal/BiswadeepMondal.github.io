@@ -1,148 +1,100 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Group Unsubscribe</title>
-  <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: 32px auto; line-height: 1.5; color: #111; }
-    .card { border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-    h1 { margin-top: 0; }
-    #unsubscribe-groups { margin-top: 12px; }
-    .group-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
-    button { padding:8px 14px; border-radius:6px; border:1px solid #bbb; background:#0b73ff; color:white; cursor:pointer; }
-    input#email { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; }
-  </style>
+<title> </title>
+  <!-- CleverTap SDK -->
+ <script type="text/javascript">
+   var clevertap = {event:[], profile:[], region : 'eu1', account:[], onUserLogin:[], notifications:[], privacy:[]};
+   clevertap.account.push({"id": "TEST-4W5-9RR-646Z"});
+   (function () {
+     var wzrk = document.createElement('script');
+     wzrk.type = 'text/javascript';
+     wzrk.async = true;
+     wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';
+     var s = document.getElementsByTagName('script')[0];
+     s.parentNode.insertBefore(wzrk, s);
+   })();
+ </script>
 </head>
 <body>
-  <div class="card">
-    <h1>Email Subscription Preferences</h1>
-
-    <div>
-      <h4>I want to unsubscribe from future emails</h4>
-      <input type="text" id="email" readonly="readonly" placeholder="Loading email..." />
-      <div id="unsubscribe-groups" style="display:none"></div>
-
-      <div style="margin-top:16px;">
-        <button onclick="changeSubscriptionGroups()">Update Subscription Groups</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CleverTap SDK -->
-  <script type="text/javascript">
-    var clevertap = {event:[], profile:[], region : 'eu1', account:[], onUserLogin:[], notifications:[], privacy:[]};
-    clevertap.account.push({"id": "TEST-4W5-9RR-646Z"});
-    (function () {
-      var wzrk = document.createElement('script');
-      wzrk.type = 'text/javascript';
-      wzrk.async = true;
-      wzrk.src = 'https://d2r1yp2w7bby2u.cloudfront.net/js/clevertap.min.js';
-      var s = document.getElementsByTagName('script')[0];
-      s.parentNode.insertBefore(wzrk, s);
-    })();
-  </script>
-
-  <script>
-    var isReEncode = false;
-    var withGroups = true;
-
-    window.onload = function() {
-      console.log("window.onload → Calling $WZRK_WR.getEmail()");
-      if (typeof $WZRK_WR !== 'undefined') {
-        $WZRK_WR.getEmail(isReEncode, withGroups);
-      } else {
-        console.error("$WZRK_WR not found");
-      }
-    };
-
-    function wzrk_email_fetched(emailStr, profile) {
-      console.log("wzrk_email_fetched() called", { emailStr, profile });
-
-      document.getElementById('email').value = emailStr || '';
-
-      if (!profile || !profile.groups || !Array.isArray(profile.groups)) {
-        console.warn("wzrk_email_fetched() → No groups found in profile");
-        return;
-      }
-
-      console.log("wzrk_email_fetched() → Setting subscription groups", profile.groups);
-
-      $WZRK_WR.setSubscriptionGroups(profile.groups);
-      displayGroups();
-    }
-
-    function displayGroups() {
-      console.log("displayGroups() called");
-
-      var addList = document.getElementById('unsubscribe-groups');
-      addList.innerHTML = '';
-
-      var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
-      console.log("displayGroups() → Subscription groups received:", subscriptionGroups);
-
-      if (!subscriptionGroups || subscriptionGroups.length === 0) {
-        console.warn("displayGroups() → No groups to display");
-        addList.style.display = 'none';
-        return;
-      }
-
-      addList.style.display = 'block';
-
-      subscriptionGroups.forEach(function (obj, idx) {
-        console.log("displayGroups() → Rendering group:", obj);
-
-        var row = document.createElement('div');
-        row.className = 'group-row';
-
-        var checkBox = document.createElement('input');
-        checkBox.type = 'checkbox';
-        checkBox.checked = !!obj.isUnsubscribed;
-        checkBox.name = obj.name || ('group_' + idx);
-        checkBox.id = 'group_' + idx;
-        checkBox.className = "ct-unsub-group-input-item";
-
-        var label = document.createElement('label');
-        label.setAttribute("for", checkBox.id);
-        label.textContent = "Unsubscribe from " + obj.name;
-
-        row.appendChild(checkBox);
-        row.appendChild(label);
-        addList.appendChild(row);
-      });
-
-      console.log("displayGroups() → Completed rendering groups");
-    }
-
-    function changeSubscriptionGroups() {
-      console.log("changeSubscriptionGroups() called");
-
-      var updated = [];
-      var elements = document.getElementsByClassName("ct-unsub-group-input-item");
-
-      for (var i = 0; i < elements.length; i++) {
-        var el = elements[i];
-        var entry = {
-          name: el.name,
-          isUnsubscribed: el.checked
-        };
-        updated.push(entry);
-
-        console.log("changeSubscriptionGroups() → Group updated:", entry);
-      }
-
-      console.log("changeSubscriptionGroups() → Sending payload:", updated);
-      $WZRK_WR.changeSubscriptionGroups(isReEncode, updated);
-    }
-
-    function wzrk_email_subscription(status) {
-      console.log("wzrk_email_subscription() called with status:", status);
-
-      alert(status == 0 ? "You've been unsubscribed" : "You've been subscribed");
-
-      console.log("wzrk_email_subscription() → Fetching updated email + groups");
-      $WZRK_WR.getEmail(isReEncode, withGroups);
-    }
-  </script>
-</body>
+<div>    
+   <h4>I want to unsubscribe from future emails
+   </h4>        
+   <input type="text" id="email" /> 
+   <br/><br/>
+   <!-- Displaying unsubscribe groups in the below div once loaded -->
+   <div id="unsubscribe-groups" style="display: none"></div>
+   <!-- Unsubscribe groups buttont. User will click here and it should call `changeSubscriptionGroups`
+       method to send the request to CleverTap. -->
+   <button onclick="changeSubscriptionGroups()">Update Subscription Groups</button>    
+</div>  
+<script> 
+  window.onload = function() {
+       var isReEncode = false //Should be true only if your server is url encoding the URL on unsubscribe landing page     
+       var withGroups = true  // Should be true if the unsubscribe groups should be displayed on the landing page.
+       $WZRK_WR.getEmail(false, withGroups);
+   };
+   // will be called after the email id of the user has been fetched
+   function wzrk_email_fetched(emailStr, profile) {
+       document.getElementById("email").value = emailStr;
+       if(!profile || !profile.groups || profile.groups.length === 0) {
+           console.log("did not recv groups in callback");
+       }
+       var subscriptionGroups = profile.groups; // will be recvd only if withGroups passed true above
+       $WZRK_WR.setSubscriptionGroups(subscriptionGroups); // Can also be set here and can be retrieved by calling `$WZRK_WR.getSubscriptionGroups` method
+        $WZRK_WR.setUpdatedCategoryLong(profile);
+       displayGroups()
+   }
+ function displayGroups() {
+   //   Fetching groups
+     var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
+   //  Rendering groups in above html div
+     var addList = document.getElementById('unsubscribe-groups');
+           addList.style.display = 'block';
+           for(var i = 0; i < subscriptionGroups.length; i++) {
+               var obj = subscriptionGroups[i];
+               var checkBox = document.createElement("INPUT");
+               var isUnsubscribed = obj.isUnsubscribed
+               checkBox.setAttribute("type", "checkbox");
+               if(isUnsubscribed){
+                   checkBox.setAttribute("checked", true);
+               }
+               checkBox.setAttribute("name", obj.name)
+               checkBox.setAttribute("id", obj.name)
+               checkBox.setAttribute("class", "ct-unsub-group-input-item");
+               var label = document.createElement("LABEL");
+               label.setAttribute("for", obj.name)
+               label.innerHTML = "Unsubscribe to " + obj.name 
+               addList.appendChild(label);
+               addList.appendChild(checkBox);
+               addList.append(document.createElement('br'));
+           }
+ }
+// This function is used to send groups updation request. User can directly call
+// `$WZRK_WR.changeSubscriptionGroups(isReencode, updatedGroups)` by passing updated groups in format specified.
+  function changeSubscriptionGroups(){
+   let unsubcribeGroups = [];
+       var elements = document.getElementsByClassName(
+           "ct-unsub-group-input-item");
+       for (var i = 0; i < elements.length; i++) {
+           var element = elements[i];
+           if(element.name) {
+               var data = {name: element.name, isUnsubscribed: element.checked}
+               unsubcribeGroups.push(data)
+           }
+       }
+       $WZRK_WR.changeSubscriptionGroups(false, unsubcribeGroups);
+    } 
+   // will be called after the subscription preferences for the user have been updated
+   function wzrk_email_subscription(status) {
+       //status 0 : unsubscribed, status 1 : subscribed
+       // todo - you can show a success message to the user from here
+       var statusLabel = 'subscribed';
+       if (status == 0) {
+           statusLabel = 'unsubscribed';
+       }
+       alert("You've been " + statusLabel);
+   }
+</script>
+ </body>
 </html>
