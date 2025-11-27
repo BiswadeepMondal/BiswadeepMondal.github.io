@@ -45,31 +45,38 @@
         $WZRK_WR.setUpdatedCategoryLong(profile);
        displayGroups()
    }
- function displayGroups() {
-   //   Fetching groups
-     var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
-   //  Rendering groups in above html div
-     var addList = document.getElementById('unsubscribe-groups');
-           addList.style.display = 'block';
-           for(var i = 0; i < subscriptionGroups.length; i++) {
-               var obj = subscriptionGroups[i];
-               var checkBox = document.createElement("INPUT");
-               var isUnsubscribed = obj.isUnsubscribed
-               checkBox.setAttribute("type", "checkbox");
-               if(isUnsubscribed){
-                   checkBox.setAttribute("checked", true);
-               }
-               checkBox.setAttribute("name", obj.name)
-               checkBox.setAttribute("id", obj.name)
-               checkBox.setAttribute("class", "ct-unsub-group-input-item");
-               var label = document.createElement("LABEL");
-               label.setAttribute("for", obj.name)
-               label.innerHTML = "Unsubscribe to " + obj.name 
-               addList.appendChild(label);
-               addList.appendChild(checkBox);
-               addList.append(document.createElement('br'));
-           }
- }
+function displayGroups() {
+    var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
+    var addList = document.getElementById('unsubscribe-groups');
+    addList.style.display = 'block';
+
+    for (var i = 0; i < subscriptionGroups.length; i++) {
+        var obj = subscriptionGroups[i];
+        var checkBox = document.createElement("INPUT");
+        var isUnsubscribed = obj.isUnsubscribed;
+
+        checkBox.type = "checkbox";
+        checkBox.name = obj.name;
+        checkBox.id = obj.name;
+        checkBox.className = "ct-unsub-group-input-item";
+
+        if (isUnsubscribed) {
+            checkBox.checked = true;
+            checkBox.disabled = true;              
+            checkBox.style.opacity = "0.6";
+            checkBox.style.cursor = "not-allowed";
+        }
+
+        var label = document.createElement("LABEL");
+        label.setAttribute("for", obj.name);
+        label.innerHTML = "Unsubscribe to " + obj.name;
+
+        addList.appendChild(label);
+        addList.appendChild(checkBox);
+        addList.appendChild(document.createElement('br'));
+    }
+}
+
 // This function is used to send groups updation request. User can directly call
 // `$WZRK_WR.changeSubscriptionGroups(isReencode, updatedGroups)` by passing updated groups in format specified.
   function changeSubscriptionGroups(){
