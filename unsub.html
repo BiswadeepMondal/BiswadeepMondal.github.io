@@ -79,11 +79,11 @@ function displayGroups() {
 
 // This function is used to send groups updation request. User can directly call
 // `$WZRK_WR.changeSubscriptionGroups(isReencode, updatedGroups)` by passing updated groups in format specified.
-  function changeSubscriptionGroups(){
-   // GLOBAL variable to store updated groups
-let lastUpdatedGroups = [];
+
 
 function changeSubscriptionGroups() {
+     // GLOBAL variable to store updated groups
+    let lastUpdatedGroups = [];
     let unsubcribeGroups = [];
     var elements = document.getElementsByClassName("ct-unsub-group-input-item");
 
