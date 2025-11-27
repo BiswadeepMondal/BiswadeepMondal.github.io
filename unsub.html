@@ -48,28 +48,41 @@
     var withGroups = true;
 
     window.onload = function() {
+      console.log("window.onload → Calling $WZRK_WR.getEmail()");
       if (typeof $WZRK_WR !== 'undefined') {
         $WZRK_WR.getEmail(isReEncode, withGroups);
+      } else {
+        console.error("$WZRK_WR not found");
       }
     };
 
     function wzrk_email_fetched(emailStr, profile) {
+      console.log("wzrk_email_fetched() called", { emailStr, profile });
+
       document.getElementById('email').value = emailStr || '';
 
       if (!profile || !profile.groups || !Array.isArray(profile.groups)) {
+        console.warn("wzrk_email_fetched() → No groups found in profile");
         return;
       }
+
+      console.log("wzrk_email_fetched() → Setting subscription groups", profile.groups);
 
       $WZRK_WR.setSubscriptionGroups(profile.groups);
       displayGroups();
     }
 
     function displayGroups() {
+      console.log("displayGroups() called");
+
       var addList = document.getElementById('unsubscribe-groups');
       addList.innerHTML = '';
 
       var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
+      console.log("displayGroups() → Subscription groups received:", subscriptionGroups);
+
       if (!subscriptionGroups || subscriptionGroups.length === 0) {
+        console.warn("displayGroups() → No groups to display");
         addList.style.display = 'none';
         return;
       }
@@ -77,6 +90,8 @@
       addList.style.display = 'block';
 
       subscriptionGroups.forEach(function (obj, idx) {
+        console.log("displayGroups() → Rendering group:", obj);
+
         var row = document.createElement('div');
         row.className = 'group-row';
 
@@ -95,25 +110,37 @@
         row.appendChild(label);
         addList.appendChild(row);
       });
+
+      console.log("displayGroups() → Completed rendering groups");
     }
 
     function changeSubscriptionGroups() {
+      console.log("changeSubscriptionGroups() called");
+
       var updated = [];
       var elements = document.getElementsByClassName("ct-unsub-group-input-item");
 
       for (var i = 0; i < elements.length; i++) {
         var el = elements[i];
-        updated.push({
+        var entry = {
           name: el.name,
           isUnsubscribed: el.checked
-        });
+        };
+        updated.push(entry);
+
+        console.log("changeSubscriptionGroups() → Group updated:", entry);
       }
 
+      console.log("changeSubscriptionGroups() → Sending payload:", updated);
       $WZRK_WR.changeSubscriptionGroups(isReEncode, updated);
     }
 
     function wzrk_email_subscription(status) {
+      console.log("wzrk_email_subscription() called with status:", status);
+
       alert(status == 0 ? "You've been unsubscribed" : "You've been subscribed");
+
+      console.log("wzrk_email_subscription() → Fetching updated email + groups");
       $WZRK_WR.getEmail(isReEncode, withGroups);
     }
   </script>
