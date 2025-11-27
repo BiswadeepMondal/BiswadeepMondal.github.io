@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title> </title>
+<title>Unsubscribe</title>
 
 <!-- CleverTap SDK -->
 <script type="text/javascript">
@@ -34,15 +34,23 @@
 
 <script> 
 
-// ⭐ GLOBAL: Used by callback
-let lastUpdatedGroups = [];
+/* ------------------------------------------------------------------
+   GLOBAL VARIABLES
+------------------------------------------------------------------ */
+let lastUpdatedGroups = [];  // Stores selections when clicking button
+let previousGroups = [];     // Stores original state from CleverTap
 
+/* ------------------------------------------------------------------
+   ON PAGE LOAD → FETCH USER EMAIL + GROUPS
+------------------------------------------------------------------ */
 window.onload = function() {
     var withGroups = true;
     $WZRK_WR.getEmail(false, withGroups);
 };
 
-// Called when CleverTap returns email + groups
+/* ------------------------------------------------------------------
+   CALLBACK: CleverTap sends profile & groups
+------------------------------------------------------------------ */
 function wzrk_email_fetched(emailStr, profile) {
     document.getElementById("email").value = emailStr;
 
@@ -52,12 +60,18 @@ function wzrk_email_fetched(emailStr, profile) {
 
     var subscriptionGroups = profile.groups;
 
+    // Store original group state (deep copy)
+    previousGroups = JSON.parse(JSON.stringify(subscriptionGroups));
+
     $WZRK_WR.setSubscriptionGroups(subscriptionGroups);
     $WZRK_WR.setUpdatedCategoryLong(profile);
 
     displayGroups();
 }
 
+/* ------------------------------------------------------------------
+   DISPLAY CHECKBOXES
+------------------------------------------------------------------ */
 function displayGroups() {
     var subscriptionGroups = $WZRK_WR.getSubscriptionGroups();
     var addList = document.getElementById('unsubscribe-groups');
@@ -81,6 +95,7 @@ function displayGroups() {
             checkBox.style.cursor = "not-allowed";
         }
 
+        // Label
         var label = document.createElement("LABEL");
         label.setAttribute("for", obj.name);
         label.innerHTML = "Unsubscribe to " + obj.name;
@@ -91,8 +106,9 @@ function displayGroups() {
     }
 }
 
-
-// Called when clicking "Update Subscription Groups"
+/* ------------------------------------------------------------------
+   CLICK: Update Subscription Groups
+------------------------------------------------------------------ */
 function changeSubscriptionGroups() {
 
     let unsubcribeGroups = [];
@@ -100,6 +116,7 @@ function changeSubscriptionGroups() {
 
     for (var i = 0; i < elements.length; i++) {
         var element = elements[i];
+
         if (element.name) {
             unsubcribeGroups.push({
                 name: element.name,
@@ -108,33 +125,37 @@ function changeSubscriptionGroups() {
         }
     }
 
-    // Store globally for callback usage
+    // Store for callback
     lastUpdatedGroups = unsubcribeGroups;
 
-    // Send to CleverTap
+    // Send update request to CleverTap
     $WZRK_WR.changeSubscriptionGroups(false, unsubcribeGroups);
 }
 
-
-// CleverTap callback after update
+/* ------------------------------------------------------------------
+   CALLBACK: After CleverTap updates subscription groups
+------------------------------------------------------------------ */
 function wzrk_email_subscription(status) {
 
-    // Filter unsubscribed groups
-    const unsubscribedList = lastUpdatedGroups
-        .filter(g => g.isUnsubscribed)
+    // Current unsubscribed by user
+    const currentUnsubs = lastUpdatedGroups.filter(g => g.isUnsubscribed);
+
+    // Previously unsubscribed
+    const previousUnsubs = previousGroups.filter(g => g.isUnsubscribed);
+
+    // NEW unsubscribe = present now but not earlier
+    const newlyUnsubscribed = currentUnsubs
+        .filter(curr => !previousUnsubs.some(prev => prev.name === curr.name))
         .map(g => g.name);
 
-    let msg = "";
-
-    if (unsubscribedList.length === 0) {
-        msg = "No groups were unsubscribed.";
-    } else {
-        msg = "You’ve been unsubscribed from:\n\n" + unsubscribedList.join(", ");
+    // CASE 1: No new unsubscribe action
+    if (newlyUnsubscribed.length === 0) {
+        alert("No new groups selected to unsubscribe.");
+        return;
     }
 
-    alert(msg);
-
-    console.log("Unsubscribed Groups:", unsubscribedList);
+    // CASE 2: New unsubscribe happened
+    alert("You’ve been unsubscribed from:\n\n" + newlyUnsubscribed.join(", "));
 }
 
 </script>
