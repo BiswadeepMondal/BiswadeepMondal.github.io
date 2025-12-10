@@ -68,7 +68,6 @@
 
     <form onsubmit="return login()">
         <input type="text" id="email" placeholder="Enter email" required />
-        <input type="password" id="password" placeholder="Enter password" required />
         <button type="submit">Login</button>
     </form>
 
@@ -77,9 +76,12 @@
 
 <script>
 function login() {
-    const email = document.getElementById("email").value;
-    alert("Logged in as: " + email);
-    return false; // prevents page reload
+    const email = encodeURIComponent(document.getElementById("email").value);
+
+    // Redirect with email as a query parameter
+    window.location.href = "https://biswadeepmondal.github.io/?email=" + email;
+
+    return false; // prevent form reload
 }
 </script>
 
