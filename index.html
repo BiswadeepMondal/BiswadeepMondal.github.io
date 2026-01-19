@@ -97,6 +97,32 @@
     <h2 id="test"></h2>
 
     <script>
+
+
+  let showctid = async () => {
+    const identity = prompt("Enter Identity (example: krishna123):");
+
+    if (!identity || identity.trim() === "") {
+      alert("Identity cannot be empty");
+      return;
+    }
+
+    const proxyUrl = "https://script.google.com/macros/s/AKfycbwDGfR7daChv1_K0Em09KN43fInWUpd2OetLPn2X2TRWRjBpHBATYqVKgML5ZuhRoqz/exec";
+
+    try {
+      const res = await fetch(`${proxyUrl}?identity=${encodeURIComponent(identity)}`);
+      const data = await res.json();
+
+      console.log("Wallet Response:", data);
+      alert(JSON.stringify(data, null, 2));
+    } catch (e) {
+      console.error(e);
+      alert("Error fetching wallet data");
+    }
+  };
+
+
+      
       let pushEvent = () => {
         clevertap.event.push("page load");
       };
