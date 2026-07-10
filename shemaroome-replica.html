@@ -86,9 +86,9 @@
   }
   h1 {
     text-align: center;
-    font-size: 38px;
+    font-size: 32px;
     font-weight: 700;
-    margin: 6px 0 40px;
+    margin: 6px 0 32px;
   }
 
   .layout {
@@ -109,8 +109,8 @@
 
   /* ---- Plan cards ---- */
   .plan-card {
-    border-radius: 22px;
-    padding: 26px 30px 30px;
+    border-radius: 18px;
+    padding: 22px 24px 24px;
   }
   .plan-blue { background: linear-gradient(180deg, #10233b 0%, #0b1929 100%); }
   .plan-brown { background: linear-gradient(180deg, #33211b 0%, #241512 100%); }
@@ -118,45 +118,46 @@
   .plan-head {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding-bottom: 20px;
-    margin-bottom: 24px;
+    gap: 12px;
+    padding-bottom: 16px;
+    margin-bottom: 18px;
     border-bottom: 1px solid rgba(255,255,255,0.10);
   }
-  .plan-title { font-size: 25px; font-weight: 700; }
+  .plan-title { font-size: 21px; font-weight: 700; white-space: nowrap; }
   .adfree {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--gold);
     border: 1px solid var(--gold);
-    border-radius: 7px;
-    padding: 4px 12px;
+    border-radius: 6px;
+    padding: 3px 10px;
     font-weight: 600;
+    white-space: nowrap;
   }
 
   .features {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin-bottom: 26px;
+    gap: 6px;
+    margin-bottom: 20px;
     text-align: center;
   }
   .feature .ico {
-    height: 34px;
+    height: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 22px;
-    margin-bottom: 8px;
+    font-size: 20px;
+    margin-bottom: 6px;
   }
-  .feature .ico svg { width: 28px; height: 28px; stroke: #fff; fill: none; }
+  .feature .ico svg { width: 24px; height: 24px; stroke: #fff; fill: none; }
   .feature .badge51 {
     border: 1.5px solid #fff;
-    border-radius: 6px;
-    padding: 2px 7px;
-    font-size: 15px;
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 14px;
   }
-  .feature .lbl { font-size: 15px; color: #e2e6ea; }
+  .feature .lbl { font-size: 14px; color: #e2e6ea; }
 
   .options {
     display: grid;
@@ -166,29 +167,28 @@
   .opt {
     position: relative;
     border: 1.5px solid rgba(255,255,255,0.10);
-    border-radius: 14px;
-    padding: 16px 18px 18px;
+    border-radius: 12px;
+    padding: 13px 15px 14px;
     cursor: pointer;
     transition: border-color 0.15s ease, background 0.15s ease;
     background: rgba(255,255,255,0.015);
-    min-height: 112px;
   }
   .opt:hover { border-color: rgba(255,255,255,0.4); }
   .opt.selected { border-color: #fff; background: rgba(255,255,255,0.06); }
-  .opt .name { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
-  .opt .price { font-size: 28px; font-weight: 700; }
+  .opt .name { font-size: 15px; font-weight: 600; margin-bottom: 8px; padding-right: 26px; }
+  .opt .price { font-size: 23px; font-weight: 700; white-space: nowrap; }
   .opt .price .strike {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--muted);
     text-decoration: line-through;
     font-weight: 500;
-    margin-left: 6px;
+    margin-left: 5px;
   }
-  .opt .tag { margin-top: 10px; font-size: 14px; color: var(--gold); font-weight: 600; }
+  .opt .tag { margin-top: 7px; font-size: 13px; color: var(--gold); font-weight: 600; }
   .radio {
     position: absolute;
-    top: 16px; right: 16px;
-    width: 24px; height: 24px;
+    top: 13px; right: 14px;
+    width: 20px; height: 20px;
     border-radius: 50%;
     border: 2px solid #7d868f;
     display: flex; align-items: center; justify-content: center;
@@ -196,7 +196,7 @@
   .opt.selected .radio { border-color: #fff; background: #fff; }
   .opt.selected .radio::after {
     content: "";
-    width: 11px; height: 6px;
+    width: 9px; height: 5px;
     border-left: 2.5px solid #0b1929;
     border-bottom: 2.5px solid #0b1929;
     transform: rotate(-45deg) translateY(-1px);
