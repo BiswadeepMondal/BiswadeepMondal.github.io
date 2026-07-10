@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShemarooMe · Choose your plan</title>
+<style>
+  :root {
+    --accent: #e6395a;
+    --accent-dark: #c22c49;
+    --gold: #d9a441;
+    --text: #ffffff;
+    --muted: #9aa3ad;
+    --blue-card: #0e1f33;
+    --blue-card-2: #14283f;
+    --blue-border: #2a4a6f;
+    --brown-card: #2a1a17;
+    --brown-card-2: #35201c;
+    --footer-bg: #050505;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background: #000;
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- Background collage ---- */
+  .bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      linear-gradient(rgba(0,0,0,0.78), rgba(0,0,0,0.9)),
+      repeating-linear-gradient(115deg, #1a1a22 0 140px, #101018 140px 280px),
+      radial-gradient(circle at 20% 30%, #241a2e, transparent 45%),
+      radial-gradient(circle at 80% 70%, #2a1414, transparent 45%);
+    filter: saturate(0.7);
+  }
+
+  /* ---- Top nav ---- */
+  header {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+  }
+  .nav-left { display: flex; align-items: center; gap: 14px; }
+  .logo { display: flex; align-items: flex-end; height: 52px; }
+  .logo svg { height: 100%; width: auto; }
+  .nav-right { display: flex; align-items: center; gap: 16px; }
+  .btn-login {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 26px;
+    border: 1.5px solid var(--accent);
+    background: transparent;
+    color: #fff;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.1s ease;
+  }
+  .btn-login:hover { background: var(--accent); }
+  .btn-login:active { transform: scale(0.97); }
+  .btn-login svg { width: 16px; height: 16px; }
+
+  /* ---- Main ---- */
+  main {
+    position: relative;
+    z-index: 2;
+    padding: 20px 40px 60px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 700;
+    margin: 10px 0 34px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr minmax(auto, 640px) minmax(auto, 640px);
+    gap: 30px;
+    align-items: start;
+    max-width: 1700px;
+    margin: 0 auto;
+  }
+  .hero-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 60px;
+  }
+  .hero-logo svg { width: 100%; max-width: 460px; height: auto; }
+
+  /* ---- Plan cards ---- */
+  .plan-card {
+    border-radius: 18px;
+    padding: 26px 28px 30px;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+  .plan-blue { background: linear-gradient(180deg, #10233b, #0c1a2c); }
+  .plan-brown { background: linear-gradient(180deg, #2e1c18, #241512); }
+
+  .plan-head {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .plan-title { font-size: 24px; font-weight: 700; }
+  .adfree {
+    font-size: 13px;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-weight: 600;
+  }
+
+  .features {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .feature .ico {
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+  .feature .ico svg { width: 26px; height: 26px; stroke: #fff; }
+  .feature .badge51 {
+    border: 1.5px solid #fff;
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 15px;
+  }
+  .feature .lbl { font-size: 14px; color: #d5d9de; }
+  .feature .sub { font-size: 13px; color: var(--muted); }
+
+  .options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .opt {
+    position: relative;
+    border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+    background: rgba(255,255,255,0.02);
+  }
+  .opt:hover { border-color: rgba(255,255,255,0.35); }
+  .opt.selected { border-color: #fff; background: rgba(255,255,255,0.05); }
+  .opt .name { font-size: 16px; font-weight: 600; margin-bottom: 10px; }
+  .opt .price { font-size: 26px; font-weight: 700; }
+  .opt .price .strike {
+    font-size: 15px;
+    color: var(--muted);
+    text-decoration: line-through;
+    font-weight: 500;
+    margin-left: 6px;
+  }
+  .opt .tag { margin-top: 8px; font-size: 13px; color: var(--gold); font-weight: 600; }
+  .radio {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--muted);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .opt.selected .radio { border-color: #fff; background: #fff; }
+  .opt.selected .radio::after {
+    content: "";
+    width: 10px; height: 6px;
+    border-left: 2px solid #0c1a2c;
+    border-bottom: 2px solid #0c1a2c;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+
+  /* ---- Checkout bar ---- */
+  .checkout {
+    position: relative;
+    z-index: 3;
+    max-width: 1700px;
+    margin: 30px auto 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+    padding: 18px 40px;
+  }
+  .coupon-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(20,20,24,0.9);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 16px 20px;
+    min-width: 340px;
+    cursor: pointer;
+    color: #cfd4da;
+    font-size: 17px;
+    justify-content: space-between;
+  }
+  .coupon-bar .left { display: flex; align-items: center; gap: 12px; }
+  .coupon-bar svg { width: 22px; height: 22px; stroke: #cfd4da; }
+  .applicable { text-align: left; }
+  .applicable .k { color: var(--muted); font-size: 15px; }
+  .applicable .v { font-size: 24px; font-weight: 700; }
+  .pay-wrap { text-align: center; }
+  .btn-pay {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 16px 44px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .btn-pay:hover { background: var(--accent-dark); }
+  .btn-pay:active { transform: scale(0.98); }
+  .tax { margin-top: 8px; font-size: 13px; color: var(--muted); }
+
+  /* ---- Footer ---- */
+  footer {
+    position: relative;
+    z-index: 2;
+    background: var(--footer-bg);
+    padding: 40px 40px 60px;
+    margin-top: 40px;
+  }
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    max-width: 1700px;
+    margin: 0 auto;
+  }
+  .footer-grid h3 { font-size: 24px; font-weight: 700; margin-bottom: 18px; }
+  .footer-grid a {
+    display: block;
+    color: #cfd4da;
+    text-decoration: none;
+    font-size: 17px;
+    margin-bottom: 12px;
+  }
+  .footer-grid a:hover { color: #fff; }
+
+  /* ---- Modal ---- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 50;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 4vh;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    color: #1a1a1a;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 780px;
+    min-height: 520px;
+    padding: 34px 40px;
+    position: relative;
+  }
+  .modal .close {
+    position: absolute;
+    top: 22px; right: 26px;
+    background: none; border: none;
+    font-size: 26px; line-height: 1;
+    color: #55606a; cursor: pointer;
+  }
+  .modal h2 { font-size: 26px; margin-bottom: 22px; }
+  .promo-row { display: flex; gap: 14px; align-items: stretch; }
+  .promo-input {
+    flex: 1;
+    border: 1px solid #cfd4da;
+    border-radius: 12px;
+    padding: 16px 18px;
+    font-size: 18px;
+    outline: none;
+  }
+  .promo-input:focus { border-color: var(--accent); }
+  .btn-apply {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0 40px;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-apply:hover { background: var(--accent-dark); }
+  .or-divider {
+    display: flex; align-items: center; gap: 16px;
+    color: var(--muted); font-weight: 600;
+    margin: 30px 0;
+  }
+  .or-divider::before, .or-divider::after {
+    content: ""; flex: 1; height: 1px; background: #dadfe4;
+  }
+  .coupons-title { font-size: 22px; font-weight: 700; margin-bottom: 30px; }
+  .no-coupons { text-align: center; font-weight: 700; color: #1a1a1a; padding: 20px 0; }
+  .promo-msg { margin-top: 12px; font-size: 15px; min-height: 20px; }
+  .promo-msg.ok { color: #1a8f4a; }
+  .promo-msg.err { color: var(--accent); }
+
+  /* ---- Login modal ---- */
+  .login-modal {
+    background: #101820;
+    color: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    min-height: auto;
+    padding: 34px 34px 38px;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .login-modal .close { color: #9aa3ad; }
+  .login-modal h2 { text-align: center; margin-bottom: 6px; }
+  .login-modal .sub { text-align: center; color: var(--muted); font-size: 15px; margin-bottom: 26px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 14px; color: #cfd4da; margin-bottom: 7px; }
+  .field input {
+    width: 100%;
+    background: #1a2530;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .btn-continue {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .btn-continue:hover { background: var(--accent-dark); }
+  .login-foot { text-align: center; color: var(--muted); font-size: 14px; margin-top: 18px; }
+  .login-foot a { color: var(--accent); text-decoration: none; }
+
+  @media (max-width: 1100px) {
+    .layout { grid-template-columns: 1fr; }
+    .hero-logo { padding-top: 0; margin-bottom: 20px; }
+    header { padding: 16px 20px; }
+    main { padding: 16px 20px 40px; }
+    .footer-grid { grid-template-columns: 1fr 1fr; }
+    .checkout { flex-direction: column; }
+    .coupon-bar { min-width: 0; width: 100%; }
+  }
+  @media (max-width: 620px) {
+    .options { grid-template-columns: 1fr; }
+    .modal { padding: 26px 22px; }
+    .promo-row { flex-direction: column; }
+    .btn-apply { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+
+<header>
+  <div class="nav-left">
+    <div class="logo">
+      <!-- Stylized approximation of the ShemarooMe mark -->
+      <svg viewBox="0 0 220 60" xmlns="http://www.w3.org/2000/svg" aria-label="ShemarooMe">
+        <polygon points="8,40 46,10 40,44" fill="#e6395a" opacity="0.92"/>
+        <polygon points="30,8 60,34 24,44" fill="#4a8fd4" opacity="0.9"/>
+        <polygon points="18,44 52,30 40,56" fill="#f5a623" opacity="0.9"/>
+        <polygon points="34,26 58,44 30,50" fill="#7ab648" opacity="0.85"/>
+        <text x="64" y="34" font-family="Segoe UI, Arial" font-size="26" font-weight="800" fill="#fff" letter-spacing="-1">shemaroo</text>
+        <text x="150" y="52" font-family="Segoe UI, Arial" font-size="16" font-weight="800" fill="#f5a623">me</text>
+      </svg>
+    </div>
+  </div>
+  <div class="nav-right">
+    <button class="btn-login" id="loginBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      Login
+    </button>
+  </div>
+</header>
+
+<main>
+  <h1>Choose your plan</h1>
+
+  <div class="layout">
+    <!-- Hero logo -->
+    <div class="hero-logo">
+      <svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg" aria-label="ShemarooMe">
+        <polygon points="40,150 210,20 180,170" fill="#e6395a" opacity="0.92"/>
+        <polygon points="150,10 300,140 120,175" fill="#4a8fd4" opacity="0.9"/>
+        <polygon points="90,170 260,120 200,215" fill="#f5a623" opacity="0.9"/>
+        <polygon points="170,110 300,175 150,200" fill="#7ab648" opacity="0.8"/>
+        <text x="70" y="120" font-family="Segoe UI, Arial" font-size="72" font-weight="800" fill="#fff" letter-spacing="-3">shemaroo</text>
+        <text x="300" y="180" font-family="Segoe UI, Arial" font-size="44" font-weight="800" fill="#f5a623">me</text>
+      </svg>
+    </div>
+
+    <!-- Left plan -->
+    <section class="plan-card plan-blue" data-plan="blue">
+      <div class="plan-head">
+        <span class="plan-title">Gujarati, Bollywood, Mature</span>
+        <span class="adfree">Ad Free</span>
+      </div>
+      <div class="features">
+        <div class="feature"><div class="ico">4K</div><div class="lbl">2160p</div></div>
+        <div class="feature"><div class="ico"><span class="badge51">5.1</span></div><div class="lbl">Surround</div></div>
+        <div class="feature"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="1"/><rect x="17" y="9" width="5" height="9" rx="1"/></svg></div><div class="lbl">4 Devices</div></div>
+        <div class="feature"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg></div><div class="lbl">Download</div></div>
+      </div>
+      <div class="options">
+        <div class="opt selected" data-price="999" data-tag="Our best deal ever">
+          <div class="radio"></div>
+          <div class="name">Two Yearly</div>
+          <div class="price">₹ 999<span class="strike">₹1299</span></div>
+          <div class="tag">Our best deal ever</div>
+        </div>
+        <div class="opt" data-price="699" data-tag="Most popular choice">
+          <div class="radio"></div>
+          <div class="name">Yearly</div>
+          <div class="price">₹ 699<span class="strike">₹999</span></div>
+          <div class="tag">Most popular choice</div>
+        </div>
+        <div class="opt" data-price="449" data-tag="Perfect to get started">
+          <div class="radio"></div>
+          <div class="name">Quarterly</div>
+          <div class="price">₹ 449<span class="strike">₹599</span></div>
+          <div class="tag">Perfect to get started</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right plan -->
+    <section class="plan-card plan-brown" data-plan="brown">
+      <div class="plan-head">
+        <span class="plan-title">Mature Only Plan</span>
+        <span class="adfree">Ad Free</span>
+      </div>
+      <div class="features">
+        <div class="feature"><div class="ico">4K</div><div class="lbl">2160p</div></div>
+        <div class="feature"><div class="ico"><span class="badge51">5.1</span></div><div class="lbl">Surround</div></div>
+        <div class="feature"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="6" width="14" height="12" rx="1"/><rect x="17" y="9" width="5" height="9" rx="1"/></svg></div><div class="lbl">4 Devices</div></div>
+        <div class="feature"><div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 21h16"/></svg></div><div class="lbl">Download</div></div>
+      </div>
+      <div class="options">
+        <div class="opt" data-price="699" data-tag="">
+          <div class="radio"></div>
+          <div class="name">Two Yearly</div>
+          <div class="price">₹ 699</div>
+        </div>
+        <div class="opt" data-price="449" data-tag="">
+          <div class="radio"></div>
+          <div class="name">Yearly</div>
+          <div class="price">₹ 449</div>
+        </div>
+        <div class="opt" data-price="299" data-tag="">
+          <div class="radio"></div>
+          <div class="name">Quarterly</div>
+          <div class="price">₹ 299</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Checkout -->
+  <div class="checkout">
+    <div class="coupon-bar" id="couponBar">
+      <div class="left">
+        <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-6"/><path d="M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2z"/><path d="M12 6v14"/></svg>
+        <span>Apply coupon code</span>
+      </div>
+      <span style="font-size:22px;color:#cfd4da;">&rsaquo;</span>
+    </div>
+    <div class="applicable">
+      <div class="k">Applicable Price</div>
+      <div class="v" id="applicablePrice">₹ 999</div>
+    </div>
+    <div class="pay-wrap">
+      <button class="btn-pay" id="payBtn">Pay ₹ 999</button>
+      <div class="tax">Inclusive of all taxes</div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="footer-grid">
+    <div>
+      <h3>Trending</h3>
+      <a href="#">Dil, Dhokha Aur Desire</a>
+      <a href="#">Jism Aur Jazbaat</a>
+      <a href="#">All The Best Pandya</a>
+      <a href="#">Elaichi Ek Prem Katha</a>
+    </div>
+    <div>
+      <h3>Movies by Language</h3>
+      <a href="#">Hindi Movies</a>
+      <a href="#">Gujarati Movies</a>
+      <a href="#">Marathi Movies</a>
+      <a href="#">Punjabi Movies</a>
+    </div>
+    <div>
+      <h3>Movies by Genre</h3>
+      <a href="#">Crime Movies</a>
+      <a href="#">Action Movies</a>
+      <a href="#">Romance Movies</a>
+      <a href="#">Comedy Movies</a>
+    </div>
+    <div>
+      <h3>Live TV</h3>
+      <a href="#">Shemaroo TV</a>
+      <a href="#">Shemaroo Umang</a>
+      <a href="#">Shemaroo Marathibana</a>
+      <a href="#">Shemaroo Josh</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Coupon modal -->
+<div class="overlay" id="couponOverlay">
+  <div class="modal">
+    <button class="close" data-close="couponOverlay">&times;</button>
+    <h2>Apply coupon code</h2>
+    <div class="promo-row">
+      <input type="text" class="promo-input" id="promoInput" placeholder="Enter Promo Code">
+      <button class="btn-apply" id="applyPromo">Apply</button>
+    </div>
+    <div class="promo-msg" id="promoMsg"></div>
+    <div class="or-divider">OR</div>
+    <div class="coupons-title">Coupons for this plan</div>
+    <div class="no-coupons">No Coupons available</div>
+  </div>
+</div>
+
+<!-- Login modal -->
+<div class="overlay" id="loginOverlay">
+  <div class="login-modal">
+    <button class="close" data-close="loginOverlay">&times;</button>
+    <h2>Login</h2>
+    <div class="sub">Sign in to continue to ShemarooMe</div>
+    <div class="field">
+      <label for="loginId">Mobile number or Email</label>
+      <input type="text" id="loginId" placeholder="Enter your mobile or email">
+    </div>
+    <div class="field">
+      <label for="loginPw">Password</label>
+      <input type="password" id="loginPw" placeholder="Enter your password">
+    </div>
+    <button class="btn-continue" id="loginSubmit">Continue</button>
+    <div class="login-foot">New to ShemarooMe? <a href="#">Create an account</a></div>
+  </div>
+</div>
+
+<script>
+  // ----- Plan selection -----
+  const cards = document.querySelectorAll('.plan-card');
+  const applicable = document.getElementById('applicablePrice');
+  const payBtn = document.getElementById('payBtn');
+  let currentPrice = 999;
+
+  function selectOption(card, opt) {
+    // clear selection across ALL cards (single active plan)
+    document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    currentPrice = opt.dataset.price;
+    applicable.textContent = '₹ ' + currentPrice;
+    payBtn.textContent = 'Pay ₹ ' + currentPrice;
+    // reset any applied coupon message
+    document.getElementById('promoMsg').textContent = '';
+  }
+
+  cards.forEach(card => {
+    card.querySelectorAll('.opt').forEach(opt => {
+      opt.addEventListener('click', () => selectOption(card, opt));
+    });
+  });
+
+  // ----- Overlays -----
+  function openOverlay(id) { document.getElementById(id).classList.add('open'); }
+  function closeOverlay(id) { document.getElementById(id).classList.remove('open'); }
+
+  document.getElementById('couponBar').addEventListener('click', () => openOverlay('couponOverlay'));
+  document.getElementById('loginBtn').addEventListener('click', () => openOverlay('loginOverlay'));
+
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => closeOverlay(btn.dataset.close));
+  });
+  document.querySelectorAll('.overlay').forEach(ov => {
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
+  });
+
+  // ----- Promo apply (demo logic) -----
+  const DEMO_CODES = { 'SHEMAROO10': 0.10, 'WELCOME20': 0.20, 'FLAT50': 0.50 };
+  document.getElementById('applyPromo').addEventListener('click', () => {
+    const code = document.getElementById('promoInput').value.trim().toUpperCase();
+    const msg = document.getElementById('promoMsg');
+    if (!code) { msg.className = 'promo-msg err'; msg.textContent = 'Please enter a promo code.'; return; }
+    if (DEMO_CODES[code] != null) {
+      const discounted = Math.round(currentPrice * (1 - DEMO_CODES[code]));
+      applicable.textContent = '₹ ' + discounted;
+      payBtn.textContent = 'Pay ₹ ' + discounted;
+      msg.className = 'promo-msg ok';
+      msg.textContent = 'Coupon applied! You saved ₹' + (currentPrice - discounted) + '.';
+    } else {
+      msg.className = 'promo-msg err';
+      msg.textContent = 'Invalid promo code. Try again.';
+    }
+  });
+
+  // ----- Login submit (demo) -----
+  document.getElementById('loginSubmit').addEventListener('click', () => {
+    const id = document.getElementById('loginId').value.trim();
+    if (!id) { document.getElementById('loginId').focus(); return; }
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + id.split('@')[0];
+    closeOverlay('loginOverlay');
+  });
+
+  document.getElementById('payBtn').addEventListener('click', () => {
+    alert('Demo checkout — Pay ' + applicable.textContent);
+  });
+</script>
+</body>
+</html>
