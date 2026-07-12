@@ -400,6 +400,11 @@
   .coupon-desc { margin-top: 11px; color: #2f333a; font-size: 14.5px; line-height: 1.45; }
   .coupon-tnc { margin: 9px 0 0; padding-left: 18px; color: #767c84; font-size: 12.5px; line-height: 1.5; }
   .coupon-tnc li { margin-bottom: 2px; }
+  .coupon-expiry {
+    margin-top: 10px; font-size: 12.5px; font-weight: 600; color: #8a6d1f;
+    background: #fff6e6; border: 1px solid #f0d18a; border-radius: 6px;
+    padding: 4px 10px; display: inline-block;
+  }
   .coupon-inapplicable { opacity: 0.6; }
   .coupon-inapplicable .coupon-code { border-color: #b9bdc4; }
   .promo-msg { margin-top: 12px; font-size: 15px; min-height: 20px; }
@@ -726,7 +731,7 @@
   //  1) Deploy the Apps Script (see Code.gs shared in chat) as a Web App
   //     with access = "Anyone", then paste its /exec URL below.
   // ============================================================
-  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYsAFfHCdGDt9d1bFORPbFGsc_LBjxaL86T8NFZ1Ej4nuRN7I0YuNWFGHCIrUyDmv1YA/exec';
+  const APPSCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE';
   let loggedInEmail = '';
 
   // Sample records — mirror the CleverTap Fetch Coupon response schema.
@@ -736,13 +741,16 @@
       description: 'Flat 50% off on your ShemarooMe annual subscription.',
       termsAndConditions: ['Valid on annual (Yearly / Two Yearly) plans only.', 'One redemption per user.', 'Cannot be clubbed with other offers.'],
       isApplicable: true,
-      bestCoupon: 'Yes'
+      bestCoupon: 'Yes',
+      couponExpiry: 1784557434,
+      couponExpiryNever: false
     },
     {
       couponCode: 'WELCOME199',
       description: 'New subscribers get the Quarterly plan at a special price.',
       termsAndConditions: ['First-time subscribers only.', 'Valid till the end of this month.'],
       isApplicable: true,
+      couponExpiryNever: true,
       bestCoupon: 'No'
     }
   ];
@@ -868,6 +876,20 @@
         card.appendChild(ul);
       }
 
+      // Expiry — convert the epoch (seconds) to a readable date
+      let expiryText = '';
+      if (rec.couponExpiryNever === true) {
+        expiryText = 'No expiry';
+      } else if (rec.couponExpiry) {
+        expiryText = 'Valid till ' + formatEpoch(rec.couponExpiry);
+      }
+      if (expiryText) {
+        const exp = document.createElement('div');
+        exp.className = 'coupon-expiry';
+        exp.textContent = expiryText;
+        card.appendChild(exp);
+      }
+
       // If the coupon isn't applicable, surface the message
       if (rec.isApplicable === false && rec.message) {
         const msg = document.createElement('div');
@@ -878,6 +900,16 @@
       }
 
       tray.appendChild(card);
+    });
+  }
+
+  // Epoch (seconds) -> human-readable local date/time, e.g. "18 Jul 2026, 3:03 PM"
+  function formatEpoch(sec) {
+    const d = new Date(Number(sec) * 1000);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('en-IN', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true
     });
   }
 
