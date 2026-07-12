@@ -310,7 +310,8 @@
     display: none;
     align-items: flex-start;
     justify-content: center;
-    padding-top: 5vh;
+    padding: 5vh 16px;
+    overflow-y: auto;
   }
   .overlay.open { display: flex; }
   .modal {
@@ -319,7 +320,9 @@
     border-radius: 16px;
     width: 100%;
     max-width: 780px;
-    min-height: 500px;
+    min-height: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
     padding: 36px 42px;
     position: relative;
   }
@@ -364,7 +367,10 @@
   .no-coupons { text-align: center; font-weight: 700; color: #1a1a1a; padding: 20px 0; }
 
   /* ---- Coupon tray (Fetch Coupon API) ---- */
-  .coupon-tray { display: flex; flex-direction: column; gap: 14px; }
+  .coupon-tray { display: flex; flex-direction: column; gap: 14px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+  .coupon-tray::-webkit-scrollbar { width: 8px; }
+  .coupon-tray::-webkit-scrollbar-thumb { background: #d4d7dd; border-radius: 8px; }
+  .coupon-tray::-webkit-scrollbar-track { background: transparent; }
   .tray-state { text-align: center; color: #6a7178; padding: 18px 0; font-size: 15px; }
   .tray-state.error { color: var(--accent); font-size: 14px; line-height: 1.5; }
   .tray-note {
@@ -709,18 +715,21 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
 
   // ============================================================
-  //  CleverTap Fetch Coupon API  →  coupon tray
-  //  Endpoint (eu1): POST https://eu1.api.clevertap.com/1/promo/coupons?identity=...
-  //  NOTE: this is a server-to-server API. A direct browser call is
-  //  normally blocked by CORS, and the Passcode is exposed client-side.
-  //  In production, proxy this through your backend. On CORS/error we
-  //  fall back to schema-accurate sample records so the tray still demos.
+  //  Coupon tray via Google Apps Script proxy (CORS-safe)
+  //  Flow:  website  →  Apps Script Web App (?identity=<logged-in email>)
+  //         Apps Script  →  CleverTap Fetch Coupon API (passcode stays server-side)
+  //         CleverTap  →  Apps Script  →  website (this tray)
+  //
+  //  A plain GET with no custom headers is a "simple request", so the
+  //  browser makes NO CORS preflight — which is what makes this work
+  //  where the direct api.clevertap.com call was blocked.
+  //
+  //  1) Deploy the Apps Script (see Code.gs shared in chat) as a Web App
+  //     with access = "Anyone", then paste its /exec URL below.
   // ============================================================
-  const CT_REGION      = 'eu1';
-  const CT_ACCOUNT_ID  = '4W5-9RR-646Z';
-  const CT_PASSCODE    = '22c-504';
-  const CT_IDENTITY    = 'biswadeep@clevertap.com';
-  const COUPON_ENDPOINT = 'https://' + CT_REGION + '.api.clevertap.com/1/promo/coupons?identity=' + encodeURIComponent(CT_IDENTITY);
+  const APPSCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE';
+  const DEFAULT_IDENTITY = 'biswadeep@clevertap.com';  // used only if no one is logged in
+  let loggedInEmail = '';
 
   // Sample records — mirror the CleverTap Fetch Coupon response schema.
   const SAMPLE_RECORDS = [
@@ -744,25 +753,23 @@
     const tray = document.getElementById('couponTray');
     tray.innerHTML = '<div class="tray-state">Loading coupons…</div>';
 
-    const reqInfo = { endpoint: COUPON_ENDPOINT, method: 'POST', identity: CT_IDENTITY, body: {} };
-    console.log('[CleverTap] Fetch Coupon request →', reqInfo);
+    const identity = loggedInEmail || DEFAULT_IDENTITY;
+    const url = APPSCRIPT_URL + '?identity=' + encodeURIComponent(identity);
+    console.log('[CleverTap] Fetch Coupon via Apps Script →', { proxy: APPSCRIPT_URL, identity: identity });
+
+    if (!APPSCRIPT_URL || APPSCRIPT_URL.indexOf('PASTE_') === 0) {
+      console.warn('[CleverTap] APPSCRIPT_URL not set — showing sample coupons.');
+      renderCoupons(SAMPLE_RECORDS, true);
+      return;
+    }
 
     try {
-      const res = await fetch(COUPON_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'X-CleverTap-Account-Id': CT_ACCOUNT_ID,
-          'X-CleverTap-Passcode': CT_PASSCODE,
-          'Content-Type': 'application/json'
-        },
-        body: '{}'   // option 1: identity only, no order/item validation
-      });
+      const res = await fetch(url, { method: 'GET' });   // simple request → no CORS preflight
       const data = await res.json();
-      console.log('[CleverTap] Fetch Coupon response →', data);
+      console.log('[CleverTap] Fetch Coupon response (via Apps Script) →', data);
       renderCoupons(data.records || [], false);
     } catch (err) {
-      console.error('[CleverTap] Fetch Coupon failed (likely CORS — needs a backend proxy) →', err);
-      // Fall back to sample data so the tray still renders for the demo.
+      console.error('[CleverTap] Proxy call failed →', err);
       renderCoupons(SAMPLE_RECORDS, true);
     }
   }
@@ -888,6 +895,7 @@
     };
     console.log("[CleverTap] onUserLogin.push →", onUserLoginPayload);
     clevertap.onUserLogin.push(onUserLoginPayload);
+    loggedInEmail = email;   // remember for the Fetch Coupon proxy call
 
     document.getElementById('loginBtn').innerHTML =
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + email.split('@')[0];
