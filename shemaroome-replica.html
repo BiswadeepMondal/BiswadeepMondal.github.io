@@ -727,8 +727,7 @@
   //  1) Deploy the Apps Script (see Code.gs shared in chat) as a Web App
   //     with access = "Anyone", then paste its /exec URL below.
   // ============================================================
-  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzkbkvUW5xR_E8up1AEuVoM3bp4ZCuT520Ym5CIG09BvlDFal-p3fazCtxUj41iO6tOFQ/exec';
-  const DEFAULT_IDENTITY = 'biswadeep@clevertap.com';  // used only if no one is logged in
+  const APPSCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_EXEC_URL_HERE';
   let loggedInEmail = '';
 
   // Sample records — mirror the CleverTap Fetch Coupon response schema.
@@ -751,27 +750,51 @@
 
   async function fetchCoupons() {
     const tray = document.getElementById('couponTray');
-    tray.innerHTML = '<div class="tray-state">Loading coupons…</div>';
-
-    const identity = loggedInEmail || DEFAULT_IDENTITY;
-    const url = APPSCRIPT_URL + '?identity=' + encodeURIComponent(identity);
-    console.log('[CleverTap] Fetch Coupon via Apps Script →', { proxy: APPSCRIPT_URL, identity: identity });
-
-    if (!APPSCRIPT_URL || APPSCRIPT_URL.indexOf('PASTE_') === 0) {
-      console.warn('[CleverTap] APPSCRIPT_URL not set — showing sample coupons.');
-      renderCoupons(SAMPLE_RECORDS, true);
+    // No coupons for logged-out users — do not fetch with any default identity.
+    if (!loggedInEmail) {
+      tray.innerHTML = '<div class="tray-state">Please log in to view your coupons.</div>';
       return;
     }
-
+    tray.innerHTML = '<div class="tray-state">Loading coupons…</div>';
     try {
-      const res = await fetch(url, { method: 'GET' });   // simple request → no CORS preflight
-      const data = await res.json();
-      console.log('[CleverTap] Fetch Coupon response (via Apps Script) →', data);
-      renderCoupons(data.records || [], false);
+      const result = await getCoupons(loggedInEmail);
+      console.log('[CleverTap] tray render →', { identity: loggedInEmail, cached: result.cached, sample: result.sample, count: result.records.length });
+      renderCoupons(result.records, result.sample);
     } catch (err) {
       console.error('[CleverTap] Proxy call failed →', err);
       renderCoupons(SAMPLE_RECORDS, true);
     }
+  }
+
+  // Client-side cache: identity -> { records, ts, sample }. 30s TTL.
+  const couponCache = {};
+  const CACHE_TTL_MS = 30000;   // 30s
+
+  async function getCoupons(identity) {
+    const hit = couponCache[identity];
+    if (hit && (Date.now() - hit.ts) < CACHE_TTL_MS) {
+      return { records: hit.records, cached: true, sample: hit.sample };
+    }
+
+    if (!APPSCRIPT_URL || APPSCRIPT_URL.indexOf('PASTE_') === 0) {
+      return { records: SAMPLE_RECORDS, cached: false, sample: true };
+    }
+
+    const url = APPSCRIPT_URL + '?identity=' + encodeURIComponent(identity);
+    const res = await fetch(url, { method: 'GET' });   // simple request → no CORS preflight
+    const data = await res.json();
+    const records = data.records || [];
+    couponCache[identity] = { records: records, ts: Date.now(), sample: false };
+    return { records: records, cached: false, sample: false };
+  }
+
+  // Prewarm on login: this is where the Apps Script cold start happens,
+  // so the tray is ready by the time the user opens it.
+  function warmCoupons(identity) {
+    if (!identity) return;
+    getCoupons(identity)
+      .then(r => console.log('[CleverTap] coupons prewarmed →', { identity: identity, count: r.records.length }))
+      .catch(err => console.warn('[CleverTap] prewarm failed (will retry on open) →', err));
   }
 
   function renderCoupons(records, isSample) {
@@ -896,6 +919,7 @@
     console.log("[CleverTap] onUserLogin.push →", onUserLoginPayload);
     clevertap.onUserLogin.push(onUserLoginPayload);
     loggedInEmail = email;   // remember for the Fetch Coupon proxy call
+    warmCoupons(email);      // prefetch this user's coupons in the background
 
     document.getElementById('loginBtn').innerHTML =
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + email.split('@')[0];
