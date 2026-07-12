@@ -4,6 +4,30 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ShemarooMe · Choose your plan</title>
+
+<!-- ============================================================
+     CleverTap Web SDK — Project ID 4W5-9RR-646Z · Region eu1 (EU)
+     Per CleverTap docs, eu1/EU is the DEFAULT region, so the
+     `region` key is intentionally omitted (adding it isn't required).
+     The Project Token (22c-504) is a SERVER-SIDE / REST-API passcode
+     and is NOT used by the web client SDK, so it is not referenced here.
+     ============================================================ -->
+<script type="text/javascript">
+  var clevertap = {event:[], profile:[], account:[], onUserLogin:[], notifications:[], privacy:[]};
+  var CT_ACCOUNT = { "id": "4W5-9RR-646Z" };            // Account ID = Project ID
+  clevertap.account.push(CT_ACCOUNT);
+  clevertap.privacy.push({ optOut: false });
+  clevertap.privacy.push({ useIP: false });
+  console.log("[CleverTap] init → account.push:", CT_ACCOUNT, "| region: eu1 (EU, default)");
+  (function () {
+    var wzrk = document.createElement('script');
+    wzrk.type = 'text/javascript';
+    wzrk.async = true;
+    wzrk.src = ('https:' == document.location.protocol ? 'https://d2r1yp2w7bby2u.cloudfront.net' : 'http://static.clevertap.com') + '/js/clevertap.min.js';
+    var s = document.getElementsByTagName('script')[0];
+    s.parentNode.insertBefore(wzrk, s);
+  })();
+</script>
 <style>
   :root {
     --accent: #e6395a;
@@ -623,14 +647,19 @@
   const applicable = document.getElementById('applicablePrice');
   const payBtn = document.getElementById('payBtn');
   let currentPrice = 999;
+  let currentPlan = 'Gujarati, Bollywood, Mature';
+  let currentDuration = 'Two Yearly';
 
   function selectOption(opt) {
     document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
     opt.classList.add('selected');
-    currentPrice = opt.dataset.price;
+    currentPrice = Number(opt.dataset.price);
+    currentDuration = opt.querySelector('.name').textContent.trim();
+    currentPlan = opt.closest('.plan-card').querySelector('.plan-title').textContent.trim();
     applicable.textContent = '₹ ' + currentPrice;
     payBtn.textContent = 'Pay ₹ ' + currentPrice;
     document.getElementById('promoMsg').textContent = '';
+    console.log("[CleverTap] plan selected →", { plan: currentPlan, duration: currentDuration, price: currentPrice });
   }
   document.querySelectorAll('.opt').forEach(opt => {
     opt.addEventListener('click', () => selectOption(opt));
@@ -657,22 +686,64 @@
       payBtn.textContent = 'Pay ₹ ' + discounted;
       msg.className='promo-msg ok';
       msg.textContent = 'Coupon applied! You saved ₹' + (currentPrice - discounted) + '.';
+      console.log("[CleverTap] coupon applied →", { code: code, discountPct: DEMO_CODES[code] * 100, from: currentPrice, to: discounted });
     } else {
       msg.className='promo-msg err';
       msg.textContent='Invalid promo code. Try again.';
     }
   });
 
-  // ----- Login (demo) -----
+  // ----- Login (fires CleverTap onUserLogin) -----
   document.getElementById('loginSubmit').addEventListener('click', () => {
-    const id = document.getElementById('loginId').value.trim();
-    if (!id) { document.getElementById('loginId').focus(); return; }
+    const email = document.getElementById('loginId').value.trim();
+    // password intentionally not validated — any value is accepted
+    if (!email) { document.getElementById('loginId').focus(); return; }
+
+    // CleverTap: identify the user. Email value is used as the Identity key.
+    var onUserLoginPayload = {
+      "Site": {
+        "Identity": email,   // captured email used as Identity
+        "Email": email,
+        "MSG-email": true,
+        "MSG-push": true
+      }
+    };
+    console.log("[CleverTap] onUserLogin.push →", onUserLoginPayload);
+    clevertap.onUserLogin.push(onUserLoginPayload);
+
     document.getElementById('loginBtn').innerHTML =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + id.split('@')[0];
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + email.split('@')[0];
     closeOverlay('loginOverlay');
   });
 
-  document.getElementById('payBtn').addEventListener('click', () => alert('Demo checkout — Pay ' + applicable.textContent));
+  // ----- Pay (fires CleverTap "Charged" conversion event) -----
+  document.getElementById('payBtn').addEventListener('click', () => {
+    // final payable amount (reflects any applied coupon); equals selected price otherwise
+    const payable = Number(applicable.textContent.replace(/[^\d.]/g, ''));
+    const couponApplied = payable !== currentPrice;
+
+    var chargedPayload = {
+      "Amount": payable,                 // price selected (final payable)
+      "Selected Plan Price": currentPrice,
+      "Currency": "INR",
+      "Plan Name": currentPlan,          // "Gujarati, Bollywood, Mature" or "Mature Only Plan"
+      "Duration": currentDuration,       // "Two Yearly" / "Yearly" / "Quarterly"
+      "Ad Free": true,
+      "Coupon Applied": couponApplied,
+      "Payment Mode": "Web",
+      "Items": [{
+        "Plan Name": currentPlan,
+        "Duration": currentDuration,
+        "Price": currentPrice
+      }]
+    };
+    console.log("[CleverTap] event.push → \"Charged\"", chargedPayload);
+    clevertap.event.push("Charged", chargedPayload);
+
+    alert('Charged event fired to CleverTap\n\nPlan: ' + currentPlan +
+          '\nDuration: ' + currentDuration +
+          '\nAmount: ₹' + payable);
+  });
 </script>
 </body>
 </html>
