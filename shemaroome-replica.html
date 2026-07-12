@@ -364,6 +364,26 @@
     content: ""; flex: 1; height: 1px; background: #dadfe4;
   }
   .coupons-title { font-size: 23px; font-weight: 700; margin-bottom: 20px; }
+
+  /* ---- Billing summary ---- */
+  .billing {
+    margin: 20px 0 6px; padding: 18px 20px;
+    border: 1px solid #e3e6ea; border-radius: 14px; background: #fafbfc;
+  }
+  .billing-title { font-size: 17px; font-weight: 700; margin-bottom: 14px; color: #17181a; }
+  .bill-row {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 15px; color: #40454c; margin-bottom: 10px;
+  }
+  .bill-row.bill-discount span:last-child { color: #1a8f4a; font-weight: 600; }
+  .bill-sep { height: 1px; background: #e3e6ea; margin: 6px 0 12px; }
+  .bill-total { font-size: 18px; font-weight: 800; color: #17181a; margin-bottom: 16px; }
+  .btn-bill-pay {
+    width: 100%; background: var(--accent); color: #fff; border: none;
+    border-radius: 999px; padding: 15px; font-size: 19px; font-weight: 700; cursor: pointer;
+  }
+  .btn-bill-pay:hover { background: var(--accent-dark); }
+  .bill-tax { text-align: center; font-size: 12.5px; color: #8a9099; margin-top: 8px; }
   .no-coupons { text-align: center; font-weight: 700; color: #1a1a1a; padding: 20px 0; }
 
   /* ---- Coupon tray (Fetch Coupon API) ---- */
@@ -642,6 +662,18 @@
       <button class="btn-apply" id="applyPromo">Apply</button>
     </div>
     <div class="promo-msg" id="promoMsg"></div>
+
+    <!-- Billing summary (shown after a coupon is applied) -->
+    <div id="billingSummary" class="billing" style="display:none;">
+      <h3 class="billing-title">Billing details</h3>
+      <div class="bill-row"><span id="billPlan">Plan</span><span id="billPlanPrice">₹0</span></div>
+      <div class="bill-row bill-discount"><span id="billCoupon">Coupon</span><span id="billDiscount">−₹0</span></div>
+      <div class="bill-sep"></div>
+      <div class="bill-row bill-total"><span>Total payable</span><span id="billTotal">₹0</span></div>
+      <button class="btn-bill-pay" id="billPay">Pay ₹0</button>
+      <div class="bill-tax">Inclusive of all taxes</div>
+    </div>
+
     <div class="or-divider">OR</div>
     <div class="coupons-title">Coupons for this plan</div>
     <div id="couponTray" class="coupon-tray"></div>
@@ -716,6 +748,8 @@
     appliedCoupon = null;
     applicable.textContent = '₹ ' + currentPrice;
     payBtn.textContent = 'Pay ₹ ' + currentPrice;
+    const bs = document.getElementById('billingSummary');
+    if (bs) bs.style.display = 'none';
   }
 
   document.querySelectorAll('.opt').forEach(opt => {
@@ -744,7 +778,7 @@
   //  1) Deploy the Apps Script (see Code.gs shared in chat) as a Web App
   //     with access = "Anyone", then paste its /exec URL below.
   // ============================================================
-  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1HMszLFBjnzxp_DYDYM-sW2_V0c-efUP_9o_bUEVxKa6TYpf9fBx6Ml3ozUsAygBqIA/exec';
+  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWlC8L7jb5zHjagWtJL_cuPs7-XqxMD-FJ7gKbhUk7nvjB4ItoONgLOgvQ1SsuDlSicA/exec';
   let loggedInEmail = '';
 
   // Sample records — mirror the CleverTap Fetch Coupon response schema.
@@ -853,6 +887,95 @@
 
   function newOrderId() { return 'SHEM-' + Date.now(); }
   const proxyReady = () => APPSCRIPT_URL && APPSCRIPT_URL.indexOf('PASTE_') !== 0;
+
+  // Fire the "Coupon Applied" custom event with all properties.
+  function fireCouponApplied() {
+    if (!appliedCoupon) return;
+    const de = appliedCoupon.discountEffect || {};
+    const payload = {
+      "Coupon Code": appliedCoupon.code,
+      "Coupon Id": appliedCoupon.couponCodeId,
+      "Coupon Discount": appliedCoupon.orderDiscount,
+      "Discount Type": de.discountType || null,
+      "Discount Rate": de.discountRate != null ? de.discountRate : null,
+      "Discount Value": de.discountValue || null,
+      "Plan Name": currentPlan,
+      "Duration": currentDuration,
+      "Selected Plan Price": currentPrice,
+      "Plan MRP": currentMrp,
+      "Payable Amount": appliedCoupon.payable,
+      "Currency": "INR",
+      "Order Id": appliedCoupon.orderId,
+      "Identity": loggedInEmail || null
+    };
+    console.log('[CleverTap] event.push → "Coupon Applied"', payload);
+    clevertap.event.push("Coupon Applied", payload);
+  }
+
+  // Populate + show the billing summary from the applied coupon.
+  function renderBilling() {
+    if (!appliedCoupon) return;
+    document.getElementById('billPlan').textContent = currentPlan + ' · ' + currentDuration;
+    document.getElementById('billPlanPrice').textContent = '₹' + currentPrice;
+    document.getElementById('billCoupon').textContent = 'Coupon (' + appliedCoupon.code + ')';
+    document.getElementById('billDiscount').textContent = '− ₹' + appliedCoupon.orderDiscount;
+    document.getElementById('billTotal').textContent = '₹' + appliedCoupon.payable;
+    document.getElementById('billPay').textContent = 'Pay ₹' + appliedCoupon.payable;
+    document.getElementById('billingSummary').style.display = 'block';
+  }
+
+  // Shared checkout: fire "Charged", then Redeem the coupon to close the cycle.
+  async function checkoutAndRedeem() {
+    const payable = Number(applicable.textContent.replace(/[^\d.]/g, ''));
+    const couponApplied = !!appliedCoupon;
+
+    var chargedPayload = {
+      "Amount": payable,                 // amount paid (after any coupon)
+      "Amount Paid": payable,
+      "Selected Plan Price": currentPrice,
+      "Currency": "INR",
+      "Plan Name": currentPlan,
+      "Duration": currentDuration,
+      "Ad Free": true,
+      "Payment Mode": "Web",
+      "Coupon Applied": couponApplied,
+      "Coupon Code": couponApplied ? appliedCoupon.code : null,
+      "Coupon Discount": couponApplied ? appliedCoupon.orderDiscount : 0,
+      "Discount Type": (couponApplied && appliedCoupon.discountEffect) ? appliedCoupon.discountEffect.discountType : null,
+      "Discount Rate": (couponApplied && appliedCoupon.discountEffect) ? appliedCoupon.discountEffect.discountRate : null,
+      "Order Id": couponApplied ? appliedCoupon.orderId : null,
+      "Items": [{
+        "Plan Name": currentPlan,
+        "Duration": currentDuration,
+        "Price": currentPrice,
+        "Amount Paid": payable
+      }]
+    };
+    console.log("[CleverTap] event.push → \"Charged\"", chargedPayload);
+    clevertap.event.push("Charged", chargedPayload);
+
+    // Redeem the coupon so it is consumed (void for single-use codes).
+    if (couponApplied && proxyReady() && loggedInEmail) {
+      const redeemPayload = {
+        couponCode: appliedCoupon.code,
+        order: buildOrder('completed', appliedCoupon.orderId)
+      };
+      if (appliedCoupon.couponCodeId) redeemPayload.couponId = appliedCoupon.couponCodeId;
+      console.log('[CleverTap] Redeem request →', { identity: loggedInEmail, type: 'redeem', payload: redeemPayload });
+      try {
+        const data = await callProxy({ action: 'redeem', type: 'redeem', identity: loggedInEmail, payload: redeemPayload });
+        console.log('[CleverTap] Redeem response →', data);
+      } catch (err) {
+        console.error('[CleverTap] Redeem failed →', err);
+      }
+    }
+
+    alert('Charged event fired to CleverTap' +
+          (couponApplied ? '\nCoupon "' + appliedCoupon.code + '" redeemed' : '') +
+          '\n\nPlan: ' + currentPlan +
+          '\nDuration: ' + currentDuration +
+          '\nAmount paid: ₹' + payable);
+  }
 
   function renderCoupons(records, isSample) {
     const tray = document.getElementById('couponTray');
@@ -981,6 +1104,8 @@
         payBtn.textContent = 'Pay ₹ ' + discounted;
         msg.className = 'promo-msg ok';
         msg.textContent = '(demo) Coupon applied! You saved ₹' + (currentPrice - discounted) + '.';
+        fireCouponApplied();
+        renderBilling();
       } else {
         clearAppliedCoupon(); msg.className = 'promo-msg err'; msg.textContent = 'Invalid promo code. Try again.';
       }
@@ -1034,6 +1159,8 @@
       msg.className = 'promo-msg ok';
       msg.textContent = 'Coupon applied! You saved ₹' + (currentPrice - payable) + '.';
       console.log('[CleverTap] coupon applied →', appliedCoupon);
+      fireCouponApplied();
+      renderBilling();
     } catch (err) {
       console.error('[CleverTap] Validate failed →', err);
       clearAppliedCoupon();
@@ -1067,57 +1194,13 @@
     closeOverlay('loginOverlay');
   });
 
-  // ----- Pay: fire "Charged" (with coupon + paid amount), then Redeem the coupon -----
-  document.getElementById('payBtn').addEventListener('click', async () => {
-    const payable = Number(applicable.textContent.replace(/[^\d.]/g, ''));
-    const couponApplied = !!appliedCoupon;
+  // ----- Pay buttons: run the Charged + Redeem cycle -----
+  document.getElementById('payBtn').addEventListener('click', () => { checkoutAndRedeem(); });
 
-    var chargedPayload = {
-      "Amount": payable,                 // amount paid (after any coupon)
-      "Amount Paid": payable,
-      "Selected Plan Price": currentPrice,
-      "Currency": "INR",
-      "Plan Name": currentPlan,          // "Gujarati, Bollywood, Mature" or "Mature Only Plan"
-      "Duration": currentDuration,       // "Two Yearly" / "Yearly" / "Quarterly"
-      "Ad Free": true,
-      "Payment Mode": "Web",
-      "Coupon Applied": couponApplied,
-      "Coupon Code": couponApplied ? appliedCoupon.code : null,
-      "Coupon Discount": couponApplied ? appliedCoupon.orderDiscount : 0,
-      "Discount Type": (couponApplied && appliedCoupon.discountEffect) ? appliedCoupon.discountEffect.discountType : null,
-      "Discount Rate": (couponApplied && appliedCoupon.discountEffect) ? appliedCoupon.discountEffect.discountRate : null,
-      "Order Id": couponApplied ? appliedCoupon.orderId : null,
-      "Items": [{
-        "Plan Name": currentPlan,
-        "Duration": currentDuration,
-        "Price": currentPrice,
-        "Amount Paid": payable
-      }]
-    };
-    console.log("[CleverTap] event.push → \"Charged\"", chargedPayload);
-    clevertap.event.push("Charged", chargedPayload);
-
-    // Redeem the coupon so it is consumed (void for single-use codes).
-    if (couponApplied && proxyReady() && loggedInEmail) {
-      const redeemPayload = {
-        couponCode: appliedCoupon.code,
-        order: buildOrder('completed', appliedCoupon.orderId)
-      };
-      if (appliedCoupon.couponCodeId) redeemPayload.couponId = appliedCoupon.couponCodeId;
-      console.log('[CleverTap] Redeem request →', { identity: loggedInEmail, type: 'redeem', payload: redeemPayload });
-      try {
-        const data = await callProxy({ action: 'redeem', type: 'redeem', identity: loggedInEmail, payload: redeemPayload });
-        console.log('[CleverTap] Redeem response →', data);
-      } catch (err) {
-        console.error('[CleverTap] Redeem failed →', err);
-      }
-    }
-
-    alert('Charged event fired to CleverTap' +
-          (couponApplied ? '\nCoupon "' + appliedCoupon.code + '" redeemed' : '') +
-          '\n\nPlan: ' + currentPlan +
-          '\nDuration: ' + currentDuration +
-          '\nAmount paid: ₹' + payable);
+  // Billing "Pay" inside the coupon modal
+  document.getElementById('billPay').addEventListener('click', async () => {
+    await checkoutAndRedeem();
+    closeOverlay('couponOverlay');
   });
 </script>
 </body>
