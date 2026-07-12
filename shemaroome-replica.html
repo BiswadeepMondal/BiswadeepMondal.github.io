@@ -691,20 +691,33 @@
   const applicable = document.getElementById('applicablePrice');
   const payBtn = document.getElementById('payBtn');
   let currentPrice = 999;
+  let currentMrp = 1299;
   let currentPlan = 'Gujarati, Bollywood, Mature';
   let currentDuration = 'Two Yearly';
+  let appliedCoupon = null;   // { code, couponCodeId, discountEffect, orderDiscount, payable, orderId }
+
+  function parseAmt(txt) { return Number(String(txt).replace(/[^\d.]/g, '')) || 0; }
 
   function selectOption(opt) {
     document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
     opt.classList.add('selected');
     currentPrice = Number(opt.dataset.price);
+    const strikeEl = opt.querySelector('.strike');
+    currentMrp = strikeEl ? parseAmt(strikeEl.textContent) : currentPrice;
     currentDuration = opt.querySelector('.name').textContent.trim();
     currentPlan = opt.closest('.plan-card').querySelector('.plan-title').textContent.trim();
+    clearAppliedCoupon();              // a coupon no longer applies to a new selection
+    const pm = document.getElementById('promoMsg'); if (pm) pm.textContent = '';
+    const pi = document.getElementById('promoInput'); if (pi) pi.value = '';
+    console.log("[CleverTap] plan selected →", { plan: currentPlan, duration: currentDuration, price: currentPrice, mrp: currentMrp });
+  }
+
+  function clearAppliedCoupon() {
+    appliedCoupon = null;
     applicable.textContent = '₹ ' + currentPrice;
     payBtn.textContent = 'Pay ₹ ' + currentPrice;
-    document.getElementById('promoMsg').textContent = '';
-    console.log("[CleverTap] plan selected →", { plan: currentPlan, duration: currentDuration, price: currentPrice });
   }
+
   document.querySelectorAll('.opt').forEach(opt => {
     opt.addEventListener('click', () => selectOption(opt));
   });
@@ -731,7 +744,7 @@
   //  1) Deploy the Apps Script (see Code.gs shared in chat) as a Web App
   //     with access = "Anyone", then paste its /exec URL below.
   // ============================================================
-  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYsAFfHCdGDt9d1bFORPbFGsc_LBjxaL86T8NFZ1Ej4nuRN7I0YuNWFGHCIrUyDmv1YA/exec';
+  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz1HMszLFBjnzxp_DYDYM-sW2_V0c-efUP_9o_bUEVxKa6TYpf9fBx6Ml3ozUsAygBqIA/exec';
   let loggedInEmail = '';
 
   // Sample records — mirror the CleverTap Fetch Coupon response schema.
@@ -803,6 +816,43 @@
       .then(r => console.log('[CleverTap] coupons prewarmed →', { identity: identity, count: r.records.length }))
       .catch(err => console.warn('[CleverTap] prewarm failed (will retry on open) →', err));
   }
+
+  // Generic proxy call for validate / redeem / revert (and fetch).
+  // POST + text/plain body = CORS "simple request" (no preflight).
+  async function callProxy(body) {
+    const res = await fetch(APPSCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+    return res.json();
+  }
+
+  // Build the CleverTap order/items object from the current plan selection.
+  function buildOrder(orderStatus, orderId) {
+    return {
+      orderId: orderId,
+      saleMrpTotal: currentMrp,
+      saleAmount: currentPrice,
+      saleChannel: 'online',
+      orderStatus: orderStatus,          // 'pending' for validate, 'completed' for redeem
+      paymentMode: 'card',
+      cartQuantity: 1,
+      items: [{
+        productId: 'PLAN_' + currentDuration.replace(/\s+/g, '').toUpperCase(),
+        itemName: currentPlan,
+        category: 'subscription',
+        subCategory: currentDuration,
+        brand: 'ShemarooMe',
+        unitPrice: currentPrice,
+        mrp: currentMrp,
+        quantity: 1
+      }]
+    };
+  }
+
+  function newOrderId() { return 'SHEM-' + Date.now(); }
+  const proxyReady = () => APPSCRIPT_URL && APPSCRIPT_URL.indexOf('PASTE_') !== 0;
 
   function renderCoupons(records, isSample) {
     const tray = document.getElementById('couponTray');
@@ -913,22 +963,82 @@
     });
   }
 
-  // ----- Promo apply (demo) -----
+  // ----- Apply coupon -> CleverTap Validate Coupon API -----
+  // Demo fallback used only when the proxy URL isn't configured yet.
   const DEMO_CODES = { 'SHEMAROO10': 0.10, 'WELCOME20': 0.20, 'FLAT50': 0.50 };
-  document.getElementById('applyPromo').addEventListener('click', () => {
+
+  document.getElementById('applyPromo').addEventListener('click', async () => {
     const code = document.getElementById('promoInput').value.trim().toUpperCase();
     const msg = document.getElementById('promoMsg');
-    if (!code) { msg.className='promo-msg err'; msg.textContent='Please enter a promo code.'; return; }
-    if (DEMO_CODES[code] != null) {
-      const discounted = Math.round(currentPrice * (1 - DEMO_CODES[code]));
-      applicable.textContent = '₹ ' + discounted;
-      payBtn.textContent = 'Pay ₹ ' + discounted;
-      msg.className='promo-msg ok';
-      msg.textContent = 'Coupon applied! You saved ₹' + (currentPrice - discounted) + '.';
-      console.log("[CleverTap] coupon applied →", { code: code, discountPct: DEMO_CODES[code] * 100, from: currentPrice, to: discounted });
-    } else {
-      msg.className='promo-msg err';
-      msg.textContent='Invalid promo code. Try again.';
+    if (!code) { msg.className = 'promo-msg err'; msg.textContent = 'Please enter a promo code.'; return; }
+
+    // Fallback: no proxy configured -> simulate validation with demo codes.
+    if (!proxyReady()) {
+      if (DEMO_CODES[code] != null) {
+        const discounted = Math.round(currentPrice * (1 - DEMO_CODES[code]));
+        appliedCoupon = { code: code, couponCodeId: null, discountEffect: { discountType: 'entireOrder', discountRate: DEMO_CODES[code] * 100, discountValue: 'percentage' }, orderDiscount: currentPrice - discounted, payable: discounted, orderId: newOrderId() };
+        applicable.textContent = '₹ ' + discounted;
+        payBtn.textContent = 'Pay ₹ ' + discounted;
+        msg.className = 'promo-msg ok';
+        msg.textContent = '(demo) Coupon applied! You saved ₹' + (currentPrice - discounted) + '.';
+      } else {
+        clearAppliedCoupon(); msg.className = 'promo-msg err'; msg.textContent = 'Invalid promo code. Try again.';
+      }
+      return;
+    }
+
+    if (!loggedInEmail) { msg.className = 'promo-msg err'; msg.textContent = 'Please log in to apply a coupon.'; return; }
+
+    msg.className = 'promo-msg'; msg.textContent = 'Validating…';
+    const orderId = newOrderId();
+    const payload = { couponCode: code, order: buildOrder('pending', orderId) };
+    console.log('[CleverTap] Validate Coupon request →', { identity: loggedInEmail, payload: payload });
+
+    try {
+      const data = await callProxy({ action: 'validate', identity: loggedInEmail, payload: payload });
+      console.log('[CleverTap] Validate Coupon response →', data);
+      const rec = (data.records && data.records[0]) || null;
+
+      if (!rec || rec.isApplicable === false || data.status === 'fail' || data.status === 'error') {
+        clearAppliedCoupon();
+        msg.className = 'promo-msg err';
+        msg.textContent = (rec && rec.message) ? rec.message : ((data && data.error) || 'Coupon is not applicable.');
+        return;
+      }
+
+      // Deduct amount: prefer CleverTap's computed savings, fall back to discountEffect.
+      const savings = rec.couponSavings || {};
+      let discount = Number(savings.orderDiscount || 0);
+      let payable;
+      if (savings.order && savings.order.orderNetAmount != null && discount > 0) {
+        payable = Number(savings.order.orderNetAmount);
+      } else if (discount > 0) {
+        payable = Math.max(0, currentPrice - discount);
+      } else {
+        const de = rec.discountEffect || {};
+        if (de.discountValue === 'percentage') discount = Math.round(currentPrice * Number(de.discountRate || 0) / 100);
+        else if (de.discountValue === 'absolute') discount = Number(de.discountRate || 0);
+        payable = Math.max(0, currentPrice - discount);
+      }
+
+      appliedCoupon = {
+        code: rec.couponCode || code,
+        couponCodeId: rec.couponCodeId || null,
+        discountEffect: rec.discountEffect || null,
+        orderDiscount: currentPrice - payable,
+        payable: payable,
+        orderId: orderId
+      };
+      applicable.textContent = '₹ ' + payable;
+      payBtn.textContent = 'Pay ₹ ' + payable;
+      msg.className = 'promo-msg ok';
+      msg.textContent = 'Coupon applied! You saved ₹' + (currentPrice - payable) + '.';
+      console.log('[CleverTap] coupon applied →', appliedCoupon);
+    } catch (err) {
+      console.error('[CleverTap] Validate failed →', err);
+      clearAppliedCoupon();
+      msg.className = 'promo-msg err';
+      msg.textContent = 'Could not validate coupon. Please try again.';
     }
   });
 
@@ -957,33 +1067,57 @@
     closeOverlay('loginOverlay');
   });
 
-  // ----- Pay (fires CleverTap "Charged" conversion event) -----
-  document.getElementById('payBtn').addEventListener('click', () => {
-    // final payable amount (reflects any applied coupon); equals selected price otherwise
+  // ----- Pay: fire "Charged" (with coupon + paid amount), then Redeem the coupon -----
+  document.getElementById('payBtn').addEventListener('click', async () => {
     const payable = Number(applicable.textContent.replace(/[^\d.]/g, ''));
-    const couponApplied = payable !== currentPrice;
+    const couponApplied = !!appliedCoupon;
 
     var chargedPayload = {
-      "Amount": payable,                 // price selected (final payable)
+      "Amount": payable,                 // amount paid (after any coupon)
+      "Amount Paid": payable,
       "Selected Plan Price": currentPrice,
       "Currency": "INR",
       "Plan Name": currentPlan,          // "Gujarati, Bollywood, Mature" or "Mature Only Plan"
       "Duration": currentDuration,       // "Two Yearly" / "Yearly" / "Quarterly"
       "Ad Free": true,
-      "Coupon Applied": couponApplied,
       "Payment Mode": "Web",
+      "Coupon Applied": couponApplied,
+      "Coupon Code": couponApplied ? appliedCoupon.code : null,
+      "Coupon Discount": couponApplied ? appliedCoupon.orderDiscount : 0,
+      "Discount Type": (couponApplied && appliedCoupon.discountEffect) ? appliedCoupon.discountEffect.discountType : null,
+      "Discount Rate": (couponApplied && appliedCoupon.discountEffect) ? appliedCoupon.discountEffect.discountRate : null,
+      "Order Id": couponApplied ? appliedCoupon.orderId : null,
       "Items": [{
         "Plan Name": currentPlan,
         "Duration": currentDuration,
-        "Price": currentPrice
+        "Price": currentPrice,
+        "Amount Paid": payable
       }]
     };
     console.log("[CleverTap] event.push → \"Charged\"", chargedPayload);
     clevertap.event.push("Charged", chargedPayload);
 
-    alert('Charged event fired to CleverTap\n\nPlan: ' + currentPlan +
+    // Redeem the coupon so it is consumed (void for single-use codes).
+    if (couponApplied && proxyReady() && loggedInEmail) {
+      const redeemPayload = {
+        couponCode: appliedCoupon.code,
+        order: buildOrder('completed', appliedCoupon.orderId)
+      };
+      if (appliedCoupon.couponCodeId) redeemPayload.couponId = appliedCoupon.couponCodeId;
+      console.log('[CleverTap] Redeem request →', { identity: loggedInEmail, type: 'redeem', payload: redeemPayload });
+      try {
+        const data = await callProxy({ action: 'redeem', type: 'redeem', identity: loggedInEmail, payload: redeemPayload });
+        console.log('[CleverTap] Redeem response →', data);
+      } catch (err) {
+        console.error('[CleverTap] Redeem failed →', err);
+      }
+    }
+
+    alert('Charged event fired to CleverTap' +
+          (couponApplied ? '\nCoupon "' + appliedCoupon.code + '" redeemed' : '') +
+          '\n\nPlan: ' + currentPlan +
           '\nDuration: ' + currentDuration +
-          '\nAmount: ₹' + payable);
+          '\nAmount paid: ₹' + payable);
   });
 </script>
 </body>
