@@ -485,27 +485,26 @@
     <!-- Hero logo: ShemarooMe pinwheel recreation -->
     <div class="hero-logo">
       <svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg" aria-label="ShemarooMe">
-        <defs>
-          <style>.rt{stroke-linejoin:round;}</style>
-        </defs>
-        <!-- overlapping rounded triangles forming the pinwheel -->
-        <path class="rt" d="M60 165 Q52 150 68 145 L250 95 Q268 92 262 112 L215 205 Q206 222 190 210 Z" fill="#e12f52" opacity="0.95"/>
-        <path class="rt" d="M175 70 Q168 54 186 54 L360 120 Q378 128 362 140 L200 200 Q184 208 178 190 Z" fill="#3f8ed6" opacity="0.92"/>
-        <path class="rt" d="M120 210 Q106 220 108 202 L150 70 Q156 52 172 62 L300 150 Q314 160 298 170 Z" fill="#f4a72b" opacity="0.9"/>
-        <path class="rt" d="M215 120 Q200 108 218 100 L340 90 Q358 90 350 108 L282 205 Q272 220 260 205 Z" fill="#7cb342" opacity="0.85"/>
-        <path class="rt" d="M255 175 Q245 160 262 156 L370 150 Q388 150 380 168 L322 250 Q312 264 300 250 Z" fill="#f4632b" opacity="0.9"/>
-        <!-- little dots -->
-        <circle cx="105" cy="88" r="6" fill="#7cb342"/>
-        <circle cx="280" cy="60" r="7" fill="#e12f52"/>
-        <circle cx="70" cy="150" r="6" fill="#3f8ed6"/>
-        <circle cx="95" cy="188" r="6" fill="#f4a72b"/>
-        <circle cx="235" cy="250" r="6" fill="#7cb342"/>
-        <circle cx="310" cy="252" r="6" fill="#f4a72b"/>
-        <!-- wordmark -->
-        <text x="70" y="185" font-family="Segoe UI, Arial, sans-serif" font-size="86" font-weight="800" fill="#fff" letter-spacing="-4">shemaroo</text>
-        <!-- 'me' on orange triangle -->
-        <path d="M330 200 L470 210 L360 285 Z" fill="#f4632b"/>
-        <text x="368" y="262" font-family="Segoe UI, Arial, sans-serif" font-size="46" font-weight="800" fill="#fff">me</text>
+        <!-- Pinwheel: 5 rounded petals radiating from centre (200,150) -->
+        <g>
+          <path d="M200 44 Q210 36 218 52 L246 150 Q253 165 238 166 L162 166 Q147 165 154 150 L182 52 Q190 36 200 44 Z" fill="#7cb342" transform="rotate(-18 200 150)"/>
+          <path d="M200 44 Q210 36 218 52 L246 150 Q253 165 238 166 L162 166 Q147 165 154 150 L182 52 Q190 36 200 44 Z" fill="#3f8ed6" transform="rotate(54 200 150)"/>
+          <path d="M200 44 Q210 36 218 52 L246 150 Q253 165 238 166 L162 166 Q147 165 154 150 L182 52 Q190 36 200 44 Z" fill="#f4632b" transform="rotate(126 200 150)"/>
+          <path d="M200 44 Q210 36 218 52 L246 150 Q253 165 238 166 L162 166 Q147 165 154 150 L182 52 Q190 36 200 44 Z" fill="#f4a72b" transform="rotate(198 200 150)"/>
+          <path d="M200 44 Q210 36 218 52 L246 150 Q253 165 238 166 L162 166 Q147 165 154 150 L182 52 Q190 36 200 44 Z" fill="#e12f52" transform="rotate(270 200 150)"/>
+        </g>
+        <!-- 'me' orange triangle, bottom-right, angled down like the original -->
+        <path d="M338 196 Q332 188 344 190 L452 206 Q464 209 456 219 L372 284 Q362 292 358 279 L332 210 Q329 200 338 196 Z" fill="#f4632b"/>
+        <!-- wordmark sits over the pinwheel -->
+        <text x="56" y="184" font-family="Segoe UI, Arial, sans-serif" font-size="80" font-weight="800" fill="#fff" letter-spacing="-3">shemaroo</text>
+        <text x="372" y="256" font-family="Segoe UI, Arial, sans-serif" font-size="44" font-weight="800" fill="#fff">me</text>
+        <!-- scattered accent dots -->
+        <circle cx="150" cy="60" r="6" fill="#7cb342"/>
+        <circle cx="322" cy="58" r="7" fill="#e12f52"/>
+        <circle cx="72" cy="150" r="6" fill="#3f8ed6"/>
+        <circle cx="120" cy="210" r="6" fill="#f4a72b"/>
+        <circle cx="250" cy="250" r="6" fill="#7cb342"/>
+        <circle cx="332" cy="250" r="6" fill="#f4a72b"/>
       </svg>
     </div>
 
