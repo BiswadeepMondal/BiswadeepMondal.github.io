@@ -360,8 +360,42 @@
   .or-divider::before, .or-divider::after {
     content: ""; flex: 1; height: 1px; background: #dadfe4;
   }
-  .coupons-title { font-size: 23px; font-weight: 700; margin-bottom: 34px; }
+  .coupons-title { font-size: 23px; font-weight: 700; margin-bottom: 20px; }
   .no-coupons { text-align: center; font-weight: 700; color: #1a1a1a; padding: 20px 0; }
+
+  /* ---- Coupon tray (Fetch Coupon API) ---- */
+  .coupon-tray { display: flex; flex-direction: column; gap: 14px; }
+  .tray-state { text-align: center; color: #6a7178; padding: 18px 0; font-size: 15px; }
+  .tray-state.error { color: var(--accent); font-size: 14px; line-height: 1.5; }
+  .tray-note {
+    background: #fff6e6; border: 1px solid #f0d18a; color: #8a6d1f;
+    font-size: 12.5px; border-radius: 8px; padding: 8px 12px; margin-bottom: 4px; line-height: 1.45;
+  }
+  .coupon-card {
+    border: 1px dashed #c9ccd2; border-radius: 12px; padding: 15px 16px 16px;
+    background: #fafafb; position: relative;
+  }
+  .coupon-code-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .coupon-code {
+    font-size: 17px; font-weight: 800; letter-spacing: 1px; color: #17181a;
+    background: #fff; border: 1.5px dashed var(--accent); border-radius: 8px;
+    padding: 6px 12px; display: inline-block;
+  }
+  .coupon-best {
+    font-size: 11px; font-weight: 700; color: #1a8f4a; background: #e5f6ec;
+    border-radius: 5px; padding: 3px 8px; margin-left: 8px; vertical-align: middle;
+  }
+  .coupon-use {
+    background: var(--accent); color: #fff; border: none; border-radius: 999px;
+    padding: 7px 18px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;
+  }
+  .coupon-use:hover { background: var(--accent-dark); }
+  .coupon-use:disabled { background: #c9ccd2; cursor: not-allowed; }
+  .coupon-desc { margin-top: 11px; color: #2f333a; font-size: 14.5px; line-height: 1.45; }
+  .coupon-tnc { margin: 9px 0 0; padding-left: 18px; color: #767c84; font-size: 12.5px; line-height: 1.5; }
+  .coupon-tnc li { margin-bottom: 2px; }
+  .coupon-inapplicable { opacity: 0.6; }
+  .coupon-inapplicable .coupon-code { border-color: #b9bdc4; }
   .promo-msg { margin-top: 12px; font-size: 15px; min-height: 20px; }
   .promo-msg.ok { color: #1a8f4a; }
   .promo-msg.err { color: var(--accent); }
@@ -600,7 +634,7 @@
     <div class="promo-msg" id="promoMsg"></div>
     <div class="or-divider">OR</div>
     <div class="coupons-title">Coupons for this plan</div>
-    <div class="no-coupons">No Coupons available</div>
+    <div id="couponTray" class="coupon-tray"></div>
   </div>
 </div>
 
@@ -668,11 +702,155 @@
   // ----- Overlays -----
   function openOverlay(id){ document.getElementById(id).classList.add('open'); }
   function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
-  document.getElementById('couponBar').addEventListener('click', () => openOverlay('couponOverlay'));
+  document.getElementById('couponBar').addEventListener('click', () => { openOverlay('couponOverlay'); fetchCoupons(); });
   document.getElementById('loginBtn').addEventListener('click', () => openOverlay('loginOverlay'));
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeOverlay(b.dataset.close)));
   document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
+
+  // ============================================================
+  //  CleverTap Fetch Coupon API  →  coupon tray
+  //  Endpoint (eu1): POST https://eu1.api.clevertap.com/1/promo/coupons?identity=...
+  //  NOTE: this is a server-to-server API. A direct browser call is
+  //  normally blocked by CORS, and the Passcode is exposed client-side.
+  //  In production, proxy this through your backend. On CORS/error we
+  //  fall back to schema-accurate sample records so the tray still demos.
+  // ============================================================
+  const CT_REGION      = 'eu1';
+  const CT_ACCOUNT_ID  = '4W5-9RR-646Z';
+  const CT_PASSCODE    = '22c-504';
+  const CT_IDENTITY    = 'biswadeep@clevertap.com';
+  const COUPON_ENDPOINT = 'https://' + CT_REGION + '.api.clevertap.com/1/promo/coupons?identity=' + encodeURIComponent(CT_IDENTITY);
+
+  // Sample records — mirror the CleverTap Fetch Coupon response schema.
+  const SAMPLE_RECORDS = [
+    {
+      couponCode: 'SHEMAROO50',
+      description: 'Flat 50% off on your ShemarooMe annual subscription.',
+      termsAndConditions: ['Valid on annual (Yearly / Two Yearly) plans only.', 'One redemption per user.', 'Cannot be clubbed with other offers.'],
+      isApplicable: true,
+      bestCoupon: 'Yes'
+    },
+    {
+      couponCode: 'WELCOME199',
+      description: 'New subscribers get the Quarterly plan at a special price.',
+      termsAndConditions: ['First-time subscribers only.', 'Valid till the end of this month.'],
+      isApplicable: true,
+      bestCoupon: 'No'
+    }
+  ];
+
+  async function fetchCoupons() {
+    const tray = document.getElementById('couponTray');
+    tray.innerHTML = '<div class="tray-state">Loading coupons…</div>';
+
+    const reqInfo = { endpoint: COUPON_ENDPOINT, method: 'POST', identity: CT_IDENTITY, body: {} };
+    console.log('[CleverTap] Fetch Coupon request →', reqInfo);
+
+    try {
+      const res = await fetch(COUPON_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'X-CleverTap-Account-Id': CT_ACCOUNT_ID,
+          'X-CleverTap-Passcode': CT_PASSCODE,
+          'Content-Type': 'application/json'
+        },
+        body: '{}'   // option 1: identity only, no order/item validation
+      });
+      const data = await res.json();
+      console.log('[CleverTap] Fetch Coupon response →', data);
+      renderCoupons(data.records || [], false);
+    } catch (err) {
+      console.error('[CleverTap] Fetch Coupon failed (likely CORS — needs a backend proxy) →', err);
+      // Fall back to sample data so the tray still renders for the demo.
+      renderCoupons(SAMPLE_RECORDS, true);
+    }
+  }
+
+  function renderCoupons(records, isSample) {
+    const tray = document.getElementById('couponTray');
+    tray.innerHTML = '';
+
+    if (isSample) {
+      const note = document.createElement('div');
+      note.className = 'tray-note';
+      note.textContent = 'Showing sample coupons — the live Fetch Coupon call was blocked in the browser (CORS). Route it through a backend proxy to display real data. The render path is identical.';
+      tray.appendChild(note);
+    }
+
+    if (!records || records.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'no-coupons';
+      empty.textContent = 'No Coupons available';
+      tray.appendChild(empty);
+      return;
+    }
+
+    records.forEach(rec => {
+      const card = document.createElement('div');
+      card.className = 'coupon-card' + (rec.isApplicable === false ? ' coupon-inapplicable' : '');
+
+      // Row: coupon code (+ best badge) and a Use button
+      const row = document.createElement('div');
+      row.className = 'coupon-code-row';
+
+      const codeWrap = document.createElement('div');
+      const code = document.createElement('span');
+      code.className = 'coupon-code';
+      code.textContent = rec.couponCode || '—';
+      codeWrap.appendChild(code);
+      if (rec.bestCoupon === 'Yes') {
+        const best = document.createElement('span');
+        best.className = 'coupon-best';
+        best.textContent = 'BEST';
+        codeWrap.appendChild(best);
+      }
+      row.appendChild(codeWrap);
+
+      const useBtn = document.createElement('button');
+      useBtn.className = 'coupon-use';
+      useBtn.textContent = 'Use';
+      if (rec.isApplicable === false) useBtn.disabled = true;
+      useBtn.addEventListener('click', () => {
+        document.getElementById('promoInput').value = rec.couponCode || '';
+        document.getElementById('promoInput').focus();
+      });
+      row.appendChild(useBtn);
+      card.appendChild(row);
+
+      // Description
+      if (rec.description) {
+        const desc = document.createElement('div');
+        desc.className = 'coupon-desc';
+        desc.textContent = rec.description;
+        card.appendChild(desc);
+      }
+
+      // Terms & conditions (array)
+      const tnc = Array.isArray(rec.termsAndConditions) ? rec.termsAndConditions : [];
+      if (tnc.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'coupon-tnc';
+        tnc.forEach(t => {
+          const li = document.createElement('li');
+          li.textContent = t;
+          ul.appendChild(li);
+        });
+        card.appendChild(ul);
+      }
+
+      // If the coupon isn't applicable, surface the message
+      if (rec.isApplicable === false && rec.message) {
+        const msg = document.createElement('div');
+        msg.className = 'coupon-desc';
+        msg.style.color = '#c22c49';
+        msg.textContent = rec.message;
+        card.appendChild(msg);
+      }
+
+      tray.appendChild(card);
+    });
+  }
 
   // ----- Promo apply (demo) -----
   const DEMO_CODES = { 'SHEMAROO10': 0.10, 'WELCOME20': 0.20, 'FLAT50': 0.50 };
