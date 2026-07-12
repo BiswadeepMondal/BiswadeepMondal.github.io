@@ -474,6 +474,72 @@
   .login-foot { text-align: center; color: var(--muted); font-size: 14px; margin-top: 18px; }
   .login-foot a { color: var(--accent); text-decoration: none; }
 
+  /* ---- Wallet / profile modal ---- */
+  .wallet-modal { max-width: 560px; }
+  .wallet-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid #e6e9ed;
+  }
+  .wallet-user { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; color: #17181a; }
+  .wallet-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #f0e3e6; color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .wallet-avatar svg { width: 20px; height: 20px; }
+  .wallet-logout {
+    border: 1.5px solid #d7dade; background: #fff; color: #40454c;
+    border-radius: 999px; padding: 7px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .wallet-logout:hover { border-color: var(--accent); color: var(--accent); }
+  .wallet-h2 { font-size: 22px; font-weight: 700; margin-bottom: 16px; color: #17181a; }
+
+  .wallet-list { display: flex; flex-direction: column; gap: 12px; }
+  .wallet-card {
+    border: 1px solid #e3e6ea; border-radius: 14px; padding: 16px 18px; cursor: pointer;
+    background: linear-gradient(135deg, #fff, #f7f8fa); transition: border-color .15s, transform .1s;
+  }
+  .wallet-card:hover { border-color: var(--accent); }
+  .wallet-card:active { transform: scale(0.995); }
+  .wallet-card-top { display: flex; align-items: baseline; justify-content: space-between; }
+  .wallet-name { font-size: 15px; font-weight: 700; color: #17181a; }
+  .wallet-balance { font-size: 26px; font-weight: 800; color: var(--accent); }
+  .wallet-balance small { font-size: 14px; font-weight: 600; color: #6a7178; margin-left: 4px; }
+  .wallet-sub { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: #6a7178; }
+  .wallet-hint { margin-top: 10px; font-size: 12px; color: var(--accent); font-weight: 600; }
+
+  .txn-back {
+    border: none; background: none; color: var(--accent); font-size: 14px; font-weight: 600;
+    cursor: pointer; padding: 0; margin-bottom: 12px;
+  }
+  .txn-expiry-note {
+    background: #fff6e6; border: 1px solid #f0d18a; color: #8a6d1f;
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 14px;
+  }
+  .txn-section-title { font-size: 13px; font-weight: 700; color: #6a7178; text-transform: uppercase; letter-spacing: .04em; margin: 14px 0 8px; }
+  .txn-list { display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; }
+  .txn-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    border: 1px solid #eceef1; border-radius: 10px; padding: 11px 13px;
+  }
+  .txn-left { min-width: 0; }
+  .txn-type {
+    display: inline-block; font-size: 10.5px; font-weight: 800; letter-spacing: .03em;
+    padding: 2px 7px; border-radius: 5px; margin-bottom: 5px;
+  }
+  .txn-CREDIT  { background: #e5f6ec; color: #1a8f4a; }
+  .txn-DEBIT   { background: #fdeaef; color: #c22c49; }
+  .txn-EXPIRED { background: #eef0f2; color: #6a7178; }
+  .txn-PENDING { background: #fff3df; color: #a9781a; }
+  .txn-desc { font-size: 13.5px; color: #2f333a; }
+  .txn-meta { font-size: 11.5px; color: #949aa2; margin-top: 3px; }
+  .txn-right { text-align: right; white-space: nowrap; }
+  .txn-points { font-size: 15px; font-weight: 800; }
+  .txn-points.pos { color: #1a8f4a; }
+  .txn-points.neg { color: #c22c49; }
+  .txn-points.neu { color: #6a7178; }
+  .txn-date { font-size: 11.5px; color: #949aa2; margin-top: 3px; }
+  .wallet-state { text-align: center; color: #6a7178; padding: 20px 0; font-size: 15px; }
+
   @media (max-width: 1100px) {
     .layout { grid-template-columns: 1fr; }
     .hero-logo { padding-top: 0; margin-bottom: 10px; }
@@ -699,6 +765,36 @@
   </div>
 </div>
 
+<!-- Wallet / profile modal -->
+<div class="overlay" id="walletOverlay">
+  <div class="modal wallet-modal">
+    <button class="close" data-close="walletOverlay">&times;</button>
+
+    <div class="wallet-head">
+      <div class="wallet-user">
+        <span class="wallet-avatar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span id="walletUser">—</span>
+      </div>
+      <button class="wallet-logout" id="walletLogout">Logout</button>
+    </div>
+
+    <!-- View 1: wallet balances -->
+    <div id="walletView">
+      <h2 class="wallet-h2">My Wallets</h2>
+      <div id="walletList" class="wallet-list"></div>
+    </div>
+
+    <!-- View 2: transaction history -->
+    <div id="txnView" style="display:none;">
+      <button class="txn-back" id="txnBack">← Back to wallets</button>
+      <h2 class="wallet-h2" id="txnTitle">Transactions</h2>
+      <div id="txnBody"></div>
+    </div>
+  </div>
+</div>
+
 <script>
   // ----- Build the poster-collage background (abstract tiles) -----
   (function(){
@@ -760,7 +856,10 @@
   function openOverlay(id){ document.getElementById(id).classList.add('open'); }
   function closeOverlay(id){ document.getElementById(id).classList.remove('open'); }
   document.getElementById('couponBar').addEventListener('click', () => { openOverlay('couponOverlay'); fetchCoupons(); });
-  document.getElementById('loginBtn').addEventListener('click', () => openOverlay('loginOverlay'));
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    if (loggedInEmail) openWallet();       // profile -> wallet popup
+    else openOverlay('loginOverlay');
+  });
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeOverlay(b.dataset.close)));
   document.querySelectorAll('.overlay').forEach(ov => ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); }));
   document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
@@ -778,7 +877,7 @@
   //  1) Deploy the Apps Script (see Code.gs shared in chat) as a Web App
   //     with access = "Anyone", then paste its /exec URL below.
   // ============================================================
-  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyWlC8L7jb5zHjagWtJL_cuPs7-XqxMD-FJ7gKbhUk7nvjB4ItoONgLOgvQ1SsuDlSicA/exec';
+  const APPSCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLsoKc9fHXPzDqILYCnGb37vpAIs6Ya3BkTOl4K2824QpLoo_jSfET3qxsgk5LRz_KBQ/exec';
   let loggedInEmail = '';
 
   // Sample records — mirror the CleverTap Fetch Coupon response schema.
@@ -975,6 +1074,16 @@
           '\n\nPlan: ' + currentPlan +
           '\nDuration: ' + currentDuration +
           '\nAmount paid: ₹' + payable);
+
+    resetSelection();   // return the UI to the default plan selection
+  }
+
+  // Reset the page to its default selection (Two Yearly ₹999 on the first plan).
+  function resetSelection() {
+    const def = document.querySelector('.plan-card .opt');
+    if (def) selectOption(def);   // also clears coupon, price, and billing summary
+    const pi = document.getElementById('promoInput'); if (pi) pi.value = '';
+    const pm = document.getElementById('promoMsg'); if (pm) pm.textContent = '';
   }
 
   function renderCoupons(records, isSample) {
@@ -1170,6 +1279,22 @@
   });
 
   // ----- Login (fires CleverTap onUserLogin) -----
+  // ----- Login / session -----
+  const SESSION_KEY = 'ctpromo_identity';
+
+  function userIcon() {
+    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  }
+  function setLoggedInUI(email) {
+    loggedInEmail = email;
+    document.getElementById('loginBtn').innerHTML = userIcon() + ' ' + email.split('@')[0];
+    const wu = document.getElementById('walletUser'); if (wu) wu.textContent = email;
+  }
+  function setLoggedOutUI() {
+    loggedInEmail = '';
+    document.getElementById('loginBtn').innerHTML = userIcon() + ' Login';
+  }
+
   document.getElementById('loginSubmit').addEventListener('click', () => {
     const email = document.getElementById('loginId').value.trim();
     // password intentionally not validated — any value is accepted
@@ -1186,13 +1311,166 @@
     };
     console.log("[CleverTap] onUserLogin.push →", onUserLoginPayload);
     clevertap.onUserLogin.push(onUserLoginPayload);
-    loggedInEmail = email;   // remember for the Fetch Coupon proxy call
-    warmCoupons(email);      // prefetch this user's coupons in the background
 
-    document.getElementById('loginBtn').innerHTML =
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ' + email.split('@')[0];
+    setLoggedInUI(email);
+    try { localStorage.setItem(SESSION_KEY, email); } catch (e) {}   // persist across refresh
+    warmCoupons(email);      // prefetch this user's coupons in the background
     closeOverlay('loginOverlay');
   });
+
+  // Logout — only path that clears the session.
+  document.getElementById('walletLogout').addEventListener('click', () => {
+    try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+    setLoggedOutUI();
+    clearAppliedCoupon();
+    closeOverlay('walletOverlay');
+    console.log('[CleverTap] logged out');
+  });
+
+  // ===================== Wallet =====================
+  const SAMPLE_WALLETS = [
+    { walletId: 1020, walletName: 'ShemarooMe Rewards', loyaltyPointsName: 'Coins', activePoints: 260, totalCreditedPoints: 388, totalRedeemedPoints: 129, totalPromisedPoints: 129, expiredPoints: 259 }
+  ];
+  const SAMPLE_TXNS = {
+    pointsExpiring: { earliestExpiryTimestamp: 1784557434, pointsExpiringSoon: 77, pointsExpiringList: [{ expiryTimestamp: 1784557434, points: 77 }] },
+    promisedPoints: { totalPromisedPoints: 50, promisedPointsList: [{ activationTimestamp: 1785162234, points: 50 }] },
+    allTransactions: [
+      { txnTimestamp: 1783886499, type: 'CREDIT', points: 100, description: 'Reward points for subscription', txnSource: 'API', orderId: 'SHEM-1001', saleChannel: 'Web', saleAmount: 999 },
+      { txnTimestamp: 1783386499, type: 'DEBIT', points: 40, description: 'Redeemed on Quarterly plan', txnSource: 'CASHBACKCOUPON', orderId: 'SHEM-0990', saleChannel: 'Web', saleAmount: 449 },
+      { txnTimestamp: 1782386499, type: 'EXPIRED', points: 259.9, description: 'Points expired automatically by system', txnSource: 'SYSTEM' }
+    ]
+  };
+
+  async function getWallet(identity) {
+    if (!proxyReady()) return { records: SAMPLE_WALLETS, sample: true };
+    const data = await callProxy({ action: 'wallet', identity: identity });
+    console.log('[CleverTap] Get Wallet Details response →', data);
+    return { records: data.records || [], sample: false };
+  }
+  async function getTransactions(identity, walletId) {
+    if (!proxyReady()) return { record: SAMPLE_TXNS, sample: true };
+    const data = await callProxy({ action: 'transactions', identity: identity, walletId: walletId, page: 1 });
+    console.log('[CleverTap] Get Wallet Transactions response →', data);
+    return { record: data.record || {}, sample: false };
+  }
+
+  function showWalletView(which) {
+    document.getElementById('walletView').style.display = (which === 'wallet') ? 'block' : 'none';
+    document.getElementById('txnView').style.display = (which === 'txn') ? 'block' : 'none';
+  }
+
+  async function openWallet() {
+    openOverlay('walletOverlay');
+    showWalletView('wallet');
+    const list = document.getElementById('walletList');
+    list.innerHTML = '<div class="wallet-state">Loading wallets…</div>';
+    console.log('[CleverTap] Get Wallet Details request →', { identity: loggedInEmail });
+    try {
+      const { records } = await getWallet(loggedInEmail);
+      renderWallets(records);
+    } catch (err) {
+      console.error('[CleverTap] Wallet fetch failed →', err);
+      list.innerHTML = '<div class="wallet-state">Could not load wallet. Please try again.</div>';
+    }
+  }
+
+  function renderWallets(records) {
+    const list = document.getElementById('walletList');
+    list.innerHTML = '';
+    if (!records || !records.length) {
+      list.innerHTML = '<div class="wallet-state">No wallets found for this user.</div>';
+      return;
+    }
+    records.forEach(w => {
+      const unit = w.loyaltyPointsName || 'Points';
+      const card = document.createElement('div');
+      card.className = 'wallet-card';
+      card.innerHTML =
+        '<div class="wallet-card-top"><span class="wallet-name">' + (w.walletName || 'Wallet') + '</span>' +
+        '<span class="wallet-balance">' + fmtNum(w.activePoints) + '<small>' + unit + '</small></span></div>' +
+        '<div class="wallet-sub">' +
+          '<span>Credited: ' + fmtNum(w.totalCreditedPoints) + '</span>' +
+          '<span>Redeemed: ' + fmtNum(w.totalRedeemedPoints) + '</span>' +
+          '<span>Promised: ' + fmtNum(w.totalPromisedPoints) + '</span>' +
+          '<span>Expired: ' + fmtNum(w.expiredPoints) + '</span>' +
+        '</div>' +
+        '<div class="wallet-hint">Tap to view transaction history →</div>';
+      card.addEventListener('click', () => openTransactions(w.walletId, w.walletName || 'Wallet', unit));
+      list.appendChild(card);
+    });
+  }
+
+  async function openTransactions(walletId, walletName, unit) {
+    showWalletView('txn');
+    document.getElementById('txnTitle').textContent = walletName + ' · Transactions';
+    const body = document.getElementById('txnBody');
+    body.innerHTML = '<div class="wallet-state">Loading transactions…</div>';
+    console.log('[CleverTap] Get Wallet Transactions request →', { identity: loggedInEmail, walletId: walletId });
+    try {
+      const { record } = await getTransactions(loggedInEmail, walletId);
+      renderTransactions(record, unit || 'Points');
+    } catch (err) {
+      console.error('[CleverTap] Transactions fetch failed →', err);
+      body.innerHTML = '<div class="wallet-state">Could not load transactions. Please try again.</div>';
+    }
+  }
+
+  function renderTransactions(record, unit) {
+    const body = document.getElementById('txnBody');
+    let html = '';
+
+    // Points expiring soon
+    const pe = record.pointsExpiring;
+    if (pe && pe.pointsExpiringSoon) {
+      html += '<div class="txn-expiry-note">' + fmtNum(pe.pointsExpiringSoon) + ' ' + unit +
+              ' expiring on ' + formatEpoch(pe.earliestExpiryTimestamp) + '</div>';
+    }
+
+    // Promised (pending) points
+    const pp = record.promisedPoints;
+    if (pp && pp.promisedPointsList && pp.promisedPointsList.length) {
+      html += '<div class="txn-section-title">Promised points</div><div class="txn-list">';
+      pp.promisedPointsList.forEach(p => {
+        html += '<div class="txn-row"><div class="txn-left">' +
+                '<span class="txn-type txn-PENDING">PENDING</span>' +
+                '<div class="txn-desc">Activates on ' + formatEpoch(p.activationTimestamp) + '</div></div>' +
+                '<div class="txn-right"><div class="txn-points neu">+' + fmtNum(p.points) + '</div></div></div>';
+      });
+      html += '</div>';
+    }
+
+    // All transactions
+    const txns = record.allTransactions || [];
+    html += '<div class="txn-section-title">All transactions</div>';
+    if (!txns.length) {
+      html += '<div class="wallet-state">No transactions yet.</div>';
+    } else {
+      html += '<div class="txn-list">';
+      txns.forEach(t => {
+        const type = (t.type || '').toUpperCase();
+        const sign = type === 'CREDIT' ? '+' : (type === 'DEBIT' || type === 'EXPIRED') ? '−' : '';
+        const cls = type === 'CREDIT' ? 'pos' : (type === 'DEBIT' || type === 'EXPIRED') ? 'neg' : 'neu';
+        const meta = [t.txnSource, t.orderId, t.saleChannel].filter(Boolean).join(' · ');
+        html += '<div class="txn-row"><div class="txn-left">' +
+                '<span class="txn-type txn-' + (type || 'PENDING') + '">' + (type || '—') + '</span>' +
+                '<div class="txn-desc">' + (t.description || '—') + '</div>' +
+                (meta ? '<div class="txn-meta">' + meta + '</div>' : '') +
+                '</div><div class="txn-right">' +
+                '<div class="txn-points ' + cls + '">' + sign + fmtNum(t.points) + '</div>' +
+                '<div class="txn-date">' + formatEpoch(t.txnTimestamp) + '</div>' +
+                '</div></div>';
+      });
+      html += '</div>';
+    }
+    body.innerHTML = html;
+  }
+
+  document.getElementById('txnBack').addEventListener('click', () => showWalletView('wallet'));
+
+  function fmtNum(n) {
+    const v = Number(n || 0);
+    return Number.isInteger(v) ? String(v) : v.toFixed(2).replace(/\.00$/, '');
+  }
 
   // ----- Pay buttons: run the Charged + Redeem cycle -----
   document.getElementById('payBtn').addEventListener('click', () => { checkoutAndRedeem(); });
@@ -1202,6 +1480,18 @@
     await checkoutAndRedeem();
     closeOverlay('couponOverlay');
   });
+
+  // Restore a persisted session on load (survives refresh; cleared only on logout).
+  (function restoreSession() {
+    let saved = null;
+    try { saved = localStorage.getItem(SESSION_KEY); } catch (e) {}
+    if (saved) {
+      setLoggedInUI(saved);
+      clevertap.onUserLogin.push({ "Site": { "Identity": saved, "Email": saved } });
+      warmCoupons(saved);
+      console.log('[CleverTap] session restored →', saved);
+    }
+  })();
 </script>
 </body>
 </html>
